@@ -4,6 +4,7 @@ import { Button } from '../components/Button';
 import { ProgressBar } from '../components/ProgressBar';
 import { Timer } from '../components/Timer';
 import { QuestionCard } from '../components/QuestionCard';
+import { MiniGameCard } from '../components/games/MiniGameCard';
 
 interface QuizProps {
   quizState: QuizState;
@@ -29,6 +30,11 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
     onSubmit();
   }, [expired, submitting, onSubmit]);
 
+  const handleGameComplete = useCallback((success: boolean) => {
+    // If won, set answer to question.correctAnswer (1), else 0
+    onAnswer(currentIndex, success ? (question.correctAnswer ?? 1) : 0);
+  }, [currentIndex, onAnswer, question]);
+
   if (!question) {
     return (
       <div className="ts-page">
@@ -38,6 +44,8 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
       </div>
     );
   }
+
+  const isGame = question.itemType === 'game';
 
   return (
     <div className="ts-page ts-page--quiz">
@@ -49,7 +57,7 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
             {quizState.topicTitle ? ` • ${quizState.topicTitle}` : ''}
           </span>
           <span className="ts-quiz-count-pill">
-            Question {currentIndex + 1} of {quizState.questions.length}
+            {isGame ? '🎮 Challenge' : '📝 Question'} {currentIndex + 1} of {quizState.questions.length}
           </span>
         </div>
 
@@ -58,11 +66,19 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
           <Timer startTime={quizState.startTime} endTime={endTime ?? quizState.endTime} onExpire={handleExpire} />
         </div>
 
-        <QuestionCard
-          question={question}
-          selectedIndex={quizState.answers[currentIndex]}
-          onSelect={(idx) => onAnswer(currentIndex, idx)}
-        />
+        {isGame ? (
+          <MiniGameCard
+            question={question}
+            selectedIndex={quizState.answers[currentIndex]}
+            onComplete={handleGameComplete}
+          />
+        ) : (
+          <QuestionCard
+            question={question}
+            selectedIndex={quizState.answers[currentIndex]}
+            onSelect={(idx) => onAnswer(currentIndex, idx)}
+          />
+        )}
 
         <div className="ts-quiz-actions">
           <Button variant="secondary" onClick={onPrev} disabled={currentIndex === 0 || submitting || expired}>

@@ -516,20 +516,195 @@ const BOOTH_SPECS = [
   }
 ];
 
-// Generates 5,000 uniquely randomized, humorous, tricky questions for a booth
-function generateBoothBank(spec, targetCount = 5000) {
+// Helper to generate dynamic game scenarios for each booth
+function generateGameItem(spec, index) {
+  const boothGamesMap = {
+    1: ['phish_swipe', 'code_roast', 'emoji_decipher'],
+    2: ['prompt_whisperer', 'emoji_decipher', 'code_roast'],
+    3: ['code_roast', 'pipeline_order', 'emoji_decipher'],
+    4: ['zombie_gpu', 'dns_firefighter', 'pipeline_order'],
+    5: ['zombie_gpu', 'prompt_whisperer', 'emoji_decipher'],
+    6: ['emoji_decipher', 'pipeline_order', 'phish_swipe'],
+    7: ['fraud_blitz', 'prompt_whisperer', 'phish_swipe'],
+    8: ['dns_firefighter', 'zombie_gpu', 'code_roast'],
+    9: ['pipeline_order', 'code_roast', 'zombie_gpu'],
+  };
+
+  const allowedTypes = boothGamesMap[spec.num] || ['zombie_gpu', 'code_roast', 'emoji_decipher'];
+  const gameType = allowedTypes[index % allowedTypes.length];
+  const num = ((index * 29 + 17) % 89) + 2;
+
+  let questionText = '🎮 Interactive Technology Mini-Game Challenge';
+  let gameData = {};
+
+  if (gameType === 'zombie_gpu') {
+    questionText = `🚨 Friday 5 PM Outage: Terminate ${Math.min(5, 3 + (index % 3))} idle GPU clusters & forgotten test pods before cloud budget breaches!`;
+    gameData = {
+      targetCount: Math.min(5, 3 + (index % 3)),
+      duration: 15,
+      title: `${spec.title} Cloud FinOps`,
+    };
+  } else if (gameType === 'phish_swipe') {
+    questionText = `🛡️ Zero Trust Gatekeeper: Inspect incoming communications and classify them as PHISH 🚫 or LEGIT ✅!`;
+    gameData = {
+      rounds: 4,
+    };
+  } else if (gameType === 'code_roast') {
+    const codeSnippets = [
+      {
+        title: `${spec.systems[index % spec.systems.length]} Microservice Gate`,
+        lines: [
+          `const token = await authService.verify(req.headers.authorization);`,
+          `if (!token) throw new AuthError("Missing bearer token");`,
+          `if (token.role === "guest") token.role = "superuser"; // TODO: quick test for demo 💣`,
+          `return handleDataProcessing(req.body);`,
+        ],
+        bugLineIndex: 2,
+        explanation: 'Line 3 quietly promotes unauthenticated guests to superuser!',
+      },
+      {
+        title: `${spec.systems[(index + 1) % spec.systems.length]} Ingestion Worker`,
+        lines: [
+          `const payload = await sftpStream.readChunk();`,
+          `const sanitized = scrubPIIFields(payload);`,
+          `if (sanitized.length > 0) fs.rmSync("/", { recursive: true }); // delete temp files 💣`,
+          `await elasticClient.bulkIndex(sanitized);`,
+        ],
+        bugLineIndex: 2,
+        explanation: 'Line 3 attempts to recursively delete the entire server root directory!',
+      },
+      {
+        title: `${spec.systems[(index + 2) % spec.systems.length]} Payment Settlement`,
+        lines: [
+          `const rate = await currencyBroker.fetchExchangeRate("USD", "INR");`,
+          `const finalDebit = transaction.amount * rate;`,
+          `if (finalDebit > 1000) transaction.discount = 1.0; // 100% discount on big wires 💸`,
+          `await ledger.recordDebit(finalDebit * (1 - transaction.discount));`,
+        ],
+        bugLineIndex: 2,
+        explanation: 'Line 3 awards a 100% discount on massive wire transfers!',
+      },
+    ];
+    const pickedSnippet = codeSnippets[index % codeSnippets.length];
+    questionText = `💥 Code Review Emergency: Spot the critical bug on ${pickedSnippet.title} that will break production!`;
+    gameData = pickedSnippet;
+  } else if (gameType === 'dns_firefighter') {
+    questionText = `🚨 SRE P1 Outage Alert: Production nodes cannot resolve inter-zone dependencies! Flush the DNS cache!`;
+    gameData = {
+      targetWhacks: 3,
+      duration: 15,
+    };
+  } else if (gameType === 'pipeline_order') {
+    questionText = `⚡ Tangled Pipeline: Swap the deployment blocks into the correct CI/CD order to ship the release!`;
+    gameData = {
+      title: `${spec.title} CI/CD`,
+      steps: [
+        { id: `s1_${index}`, label: '1. Static Linting & Typecheck', icon: '🧹', order: 0 },
+        { id: `s2_${index}`, label: '2. Unit & Integration Testing', icon: '🧪', order: 1 },
+        { id: `s3_${index}`, label: '3. Security Vulnerability Scan', icon: '🛡️', order: 2 },
+        { id: `s4_${index}`, label: '4. Blue-Green Production Rollout', icon: '🚀', order: 3 },
+      ],
+    };
+  } else if (gameType === 'prompt_whisperer') {
+    questionText = `🤖 Agentic AI Safety: Tap the 2 safe guardrail tokens to protect the autonomous agent from runaway actions!`;
+    gameData = {
+      systemPrompt: `System: You are an autonomous agent managing ${spec.systems[index % spec.systems.length]}. When executing automated actions, ALWAYS enforce [ Safe Token 1 ] and [ Safe Token 2 ] before committing.`,
+      targetSlots: ['Validate Claims', 'Enforce Rate Limit'],
+      availableChips: [
+        { id: `c1_${index}`, text: 'Validate Identity Claims 🛡️', isSafe: true },
+        { id: `c2_${index}`, text: 'Bypass Security Checks 😈', isSafe: false },
+        { id: `c3_${index}`, text: 'Enforce Strict Rate Limits 🔒', isSafe: true },
+        { id: `c4_${index}`, text: 'Leak Logs to Public Pastebin 📦', isSafe: false },
+        { id: `c5_${index}`, text: 'Ignore Timeouts & YOLO 🏎️', isSafe: false },
+      ],
+    };
+  } else if (gameType === 'fraud_blitz') {
+    questionText = `🏦 High-Speed Risk Intelligence: Fast-decision approve or block incoming transaction requests!`;
+    gameData = {
+      targetCount: 4,
+    };
+  } else if (gameType === 'emoji_decipher') {
+    const puzzles = [
+      {
+        emojis: '🐍 + 🤖 + 📊',
+        clue: 'Data science & predictive model engineering',
+        options: [
+          'Python Machine Learning & Analytics 🏆',
+          'Snake venom pharmaceutical database 🐍',
+          'Automated crypto arbitrage robot 🤖',
+          'Video streaming compression codec 📹',
+        ],
+        correctIndex: 0,
+        explanation: 'Python + AI Robot + Data Analytics!',
+      },
+      {
+        emojis: '🐳 + ☸️ + ☁️',
+        clue: 'Modern enterprise container orchestration',
+        options: [
+          'Marine wildlife satellite tracker 🐬',
+          'Docker & Kubernetes Cloud Architecture 🏆',
+          'Submarine telecommunications cable 🚢',
+          'Weather radar barometer 🌧️',
+        ],
+        correctIndex: 1,
+        explanation: 'Docker (Whale) + Kubernetes (Ship Wheel) + Cloud!',
+      },
+      {
+        emojis: '🦀 + ⚡ + 🔒',
+        clue: 'High-performance memory-safe systems programming',
+        options: [
+          'Rust Blazing Fast & Memory Safe Systems 🏆',
+          'Electric fishing pole technology 🎣',
+          'Hardware biometric padlock 🔑',
+          'Arcade crab claw machine 🦀',
+        ],
+        correctIndex: 0,
+        explanation: 'Rust (Ferris) + Lightning Speed + Memory Lock!',
+      },
+      {
+        emojis: '🛡️ + 0️⃣ + 🤝',
+        clue: 'Modern enterprise cybersecurity architecture',
+        options: [
+          'Zero Trust Continuous Security Architecture 🏆',
+          'Zero dollars handshake agreement 🤝',
+          'Medieval shield manufacturing 🛡️',
+          'Anonymous secret society forum 🕵️',
+        ],
+        correctIndex: 0,
+        explanation: 'Shield + Zero + Trust Handshake = Zero Trust!',
+      },
+    ];
+    const p = puzzles[index % puzzles.length];
+    questionText = `🧩 Tech Rebus Puzzle: What technology concept is represented by ${p.emojis}?`;
+    gameData = p;
+  }
+
+  return {
+    id: `${spec.id}_game_${index + 1}`,
+    category: spec.category,
+    difficulty: 'medium',
+    question: questionText,
+    itemType: 'game',
+    gameType,
+    gameData,
+    options: ['Challenge Incomplete', 'Challenge Completed! 🎉'],
+    correctAnswer: 1,
+  };
+}
+
+// Generates 2,000 MCQs and 3,000 Games for each booth (Total: 5,000 items)
+function generateBoothBank(spec, mcqCount = 2000, gameCount = 3000) {
   const bank = [];
   const totalScenarios = spec.scenarios.length;
 
-  for (let i = 0; i < targetCount; i++) {
+  // 1. Generate 2,000 MCQs
+  for (let i = 0; i < mcqCount; i++) {
     const scen = spec.scenarios[i % totalScenarios];
     const sys = spec.systems[i % spec.systems.length];
     const num = ((i * 17 + 23) % 97) + 3;
 
-    // Generate prompt with dynamic variables
     const promptText = scen.prompt(sys, num);
 
-    // Build options
     const resolve = (val) => (typeof val === 'function' ? val(sys, num) : val);
     const correctOption = resolve(scen.correct);
     const plausibleOptions = shuffle(scen.plausible);
@@ -549,8 +724,15 @@ function generateBoothBank(spec, targetCount = 5000) {
       difficulty,
       question: promptText,
       options: shuffledOptions,
-      correctAnswer: correctAnswerIndex
+      correctAnswer: correctAnswerIndex,
+      itemType: 'mcq',
     });
+  }
+
+  // 2. Generate 3,000 Games
+  for (let j = 0; j < gameCount; j++) {
+    const game = generateGameItem(spec, j);
+    bank.push(game);
   }
 
   return bank;
@@ -558,14 +740,15 @@ function generateBoothBank(spec, targetCount = 5000) {
 
 const DATA_DIR = path.join(__dirname, '..', 'src', 'data');
 
-console.log('🚀 Starting massive generation of 5,000 unique questions per booth...\n');
+console.log('🚀 Starting generation of 2,000 MCQs + 3,000 Games per booth (Total: 5,000 items/booth)...\n');
 
 for (const spec of BOOTH_SPECS) {
-  console.log(`Generating 5,000 questions for Booth ${spec.num} (${spec.title})...`);
-  const bank = generateBoothBank(spec, 5000);
+  console.log(`Generating 2,000 MCQs + 3,000 Games for Booth ${spec.num} (${spec.title})...`);
+  const bank = generateBoothBank(spec, 2000, 3000);
   const filePath = path.join(DATA_DIR, `${spec.id}.json`);
   fs.writeFileSync(filePath, JSON.stringify(bank, null, 2), 'utf-8');
-  console.log(`✓ Wrote ${bank.length.toLocaleString()} questions to src/data/${spec.id}.json\n`);
+  console.log(`✓ Wrote ${bank.length.toLocaleString()} items to src/data/${spec.id}.json\n`);
 }
 
-console.log('🎉 SUCCESS: All 9 booths now have 5,000 unique questions each (Total: 45,000 questions)!');
+console.log('🎉 SUCCESS: All 9 booths now have 2,000 MCQs + 3,000 Games each (Total: 45,000 items)!');
+

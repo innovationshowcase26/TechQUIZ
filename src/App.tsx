@@ -28,7 +28,7 @@ import {
   getBoothParamFromUrl,
 } from './utils/storage';
 import { getBoothById, MAX_BOOTHS_PER_PARTICIPANT, REQUIRED_BOOTHS_TO_WIN } from './data/boothsConfig';
-import { getRichQuestionsForBooth } from './utils/questionEngine';
+import { loadBoothQuestions } from './utils/questionEngine';
 
 const QUESTION_COUNT = 5;
 
@@ -221,7 +221,7 @@ export default function App() {
     // (initial useState value is already 'WELCOME', so no explicit call needed)
   }, []);
 
-  const startBoothQuiz = useCallback((booth: BoothConfig, topic?: BoothTopic, participantEmail = participant?.email) => {
+  const startBoothQuiz = useCallback(async (booth: BoothConfig, topic?: BoothTopic, participantEmail = participant?.email) => {
     if (!participantEmail) {
       setTargetBooth(booth);
       setStage('PARTICIPANT');
@@ -244,7 +244,8 @@ export default function App() {
     }
 
     try {
-      const dynamicPool = getRichQuestionsForBooth(booth.id, 50);
+      // Dynamic non-repeating draw across 1,000+ players (2,000 MCQs + 3,000 Games)
+      const dynamicPool = await loadBoothQuestions(booth.id, participantEmail);
       const pool = dynamicPool.length > 0 ? dynamicPool : (topic?.questions && topic.questions.length > 0 ? topic.questions : booth.questions);
       const count = Math.min(QUESTION_COUNT, pool.length);
       const prepared = prepareQuestions(pool, count);

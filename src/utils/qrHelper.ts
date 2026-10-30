@@ -161,3 +161,31 @@ export function playCelebrationSound(): void {
   }
 }
 
+export function playZapSound(): void {
+  try {
+    playTone(900, 0, 0.08, 0.08, 'sawtooth');
+    playTone(450, 0.04, 0.1, 0.06, 'sawtooth');
+  } catch {
+    // Ignore safely
+  }
+}
+
+export function playSuccessChime(): void {
+  try {
+    playTone(587.33, 0, 0.12, 0.08); // D5
+    playTone(880, 0.08, 0.25, 0.1);   // A5
+  } catch {
+    // Ignore safely
+  }
+}
+
+export function playFailBuzz(): void {
+  try {
+    playTone(220, 0, 0.2, 0.1, 'square');
+    playTone(164.8, 0.1, 0.25, 0.09, 'square');
+  } catch {
+    // Ignore safely
+  }
+}
+
+
