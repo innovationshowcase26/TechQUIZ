@@ -7,9 +7,11 @@ import QRCode from 'qrcode';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const BASE_URL = 'https://innovation-showcase-2026.github.io/TechQUIZ/';
+const BASE_URL = 'https://innovationshowcase26.github.io/TechQUIZ/';
 const OUTPUT_DIR = path.join(__dirname, '..', 'public', 'qr-codes');
 const ROOT_QR_DIR = path.join(__dirname, '..', 'qr-codes');
+const ROOT_DIR = path.join(__dirname, '..');
+const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
 // Ensure output directories exist
 if (!fs.existsSync(OUTPUT_DIR)) {
@@ -32,7 +34,7 @@ const BOOTHS = [
 ];
 
 async function generateAll() {
-  console.log('Generating QR codes for 9 Booths...\n');
+  console.log(`Generating QR codes pointing to ${BASE_URL} for 9 Booths...\n`);
 
   for (const booth of BOOTHS) {
     const boothUrl = `${BASE_URL}?booth=${booth.number}`;
@@ -70,7 +72,34 @@ async function generateAll() {
     console.log(`✓ Booth ${booth.number}: ${booth.title} -> ${boothUrl}`);
   }
 
-  console.log('\nAll 9 QR codes successfully generated in public/qr-codes/ and qr-codes/!');
+  // Also generate root base URL QR code
+  const rootPng = path.join(ROOT_DIR, 'qr-code.png');
+  const rootSvg = path.join(ROOT_DIR, 'qr-code.svg');
+  await QRCode.toFile(rootPng, BASE_URL, {
+    width: 1024,
+    margin: 2,
+    color: {
+      dark: '#B3192B',
+      light: '#FFFFFF',
+    },
+    errorCorrectionLevel: 'H',
+  });
+  await QRCode.toFile(rootSvg, BASE_URL, {
+    type: 'svg',
+    margin: 2,
+    color: {
+      dark: '#B3192B',
+      light: '#FFFFFF',
+    },
+    errorCorrectionLevel: 'H',
+  });
+  if (fs.existsSync(PUBLIC_DIR)) {
+    fs.copyFileSync(rootPng, path.join(PUBLIC_DIR, 'qr-code.png'));
+    fs.copyFileSync(rootSvg, path.join(PUBLIC_DIR, 'qr-code.svg'));
+  }
+  console.log(`✓ Root App: ${BASE_URL} -> qr-code.png / qr-code.svg`);
+
+  console.log('\nAll QR codes successfully generated in public/qr-codes/, qr-codes/, and root!');
 }
 
 generateAll().catch(console.error);

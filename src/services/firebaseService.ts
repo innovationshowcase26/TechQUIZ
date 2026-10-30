@@ -15,12 +15,12 @@ import { REQUIRED_BOOTHS_TO_WIN } from '../data/boothsConfig';
 
 // Web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBaweGLFMHeReP5GlqXOUA5Gro5ZahFqVE",
-  authDomain: "innovation-showcase-2026.firebaseapp.com",
-  projectId: "innovation-showcase-2026",
-  storageBucket: "innovation-showcase-2026.firebasestorage.app",
-  messagingSenderId: "577856466009",
-  appId: "1:577856466009:web:7fe373b4d1771de3655548",
+  apiKey: "AIzaSyDN01MPv0CZyrytoGiE-ncNTbN1do5chPY",
+  authDomain: "innovation-showcase-2026-d19de.firebaseapp.com",
+  projectId: "innovation-showcase-2026-d19de",
+  storageBucket: "innovation-showcase-2026-d19de.firebasestorage.app",
+  messagingSenderId: "178394050941",
+  appId: "1:178394050941:web:7c85ec9b28571981ec1c14"
 };
 
 // Initialize Firebase singleton
