@@ -2,6 +2,7 @@ import { useCallback, useState, useEffect } from 'react';
 import type { QuizState } from '../types';
 import { getRemainingSeconds, getTimerPhase } from '../utils/timer';
 import { playAnswerSound } from '../utils/qrHelper';
+import { AppStickyHeader } from '../components/AppStickyHeader';
 
 interface QuizProps {
   quizState: QuizState;
@@ -114,11 +115,7 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
   const handleSelectOption = (idx: number) => {
     playAnswerSound();
     setSelectedIdx(idx);
-    // Record answer immediately (1 point if correct, 0 if wrong)
-    const isCorrect = isGame
-      ? idx === (question.gameData?.bugLineIndex ?? DEFAULT_CODE_SNIPPET.bugLineIndex)
-      : idx === question.correctAnswer;
-    onAnswer(currentIndex, isCorrect ? 1 : 0);
+    onAnswer(currentIndex, idx);
   };
 
   const handleProceed = () => {
@@ -132,51 +129,51 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
 
   return (
     <div className="app-screen" role="main">
-      {/* 1. App Header */}
-      <header className="app-top-nav" aria-label="Booth Challenge Navigation">
-        <div className="app-nav-brand">
-          <div className="app-brand-badge" aria-hidden="true">
-            {quizState.boothNumber || 1}
-          </div>
-          <div className="app-brand-titles">
-            <span className="app-brand-eyebrow">
+      {/* 1. Universal Sticky Banner Header */}
+      <AppStickyHeader />
+
+      {/* 2. Scrollable Middle Body */}
+      <div className="app-screen-body">
+        {/* Booth Context Bar with 90s Countdown Timer */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '8px' }}>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--app-primary)' }}>
               BOOTH {quizState.boothNumber || 1} • {cleanBoothName(quizState.boothTitle || '')}
-            </span>
-            <span className="app-brand-sub">
+            </div>
+            <div style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--app-text-muted)' }}>
               Question {currentIndex + 1} of {totalQuestions}
-            </span>
+            </div>
+          </div>
+
+          {/* 90s Timer Badge */}
+          <div
+            className={`app-timer-badge ${timerPhase === 'critical' || remainingSeconds <= 15 ? 'app-timer-badge--urgent' : ''}`}
+            aria-live="polite"
+            aria-label={`Time remaining: ${remainingSeconds} seconds`}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span>{remainingSeconds}s</span>
           </div>
         </div>
 
-        {/* 90s Timer Pill */}
+        {/* Segmented Progress Bar */}
         <div
-          className={`app-timer-badge ${timerPhase === 'critical' || remainingSeconds <= 15 ? 'app-timer-badge--urgent' : ''}`}
-          aria-live="polite"
-          aria-label={`Time remaining: ${remainingSeconds} seconds`}
+          className="app-segmented-progress"
+          role="progressbar"
+          aria-valuenow={currentIndex + 1}
+          aria-valuemin={1}
+          aria-valuemax={totalQuestions}
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-          <span>{remainingSeconds}s</span>
+          {Array.from({ length: totalQuestions }).map((_, i) => (
+            <div
+              key={i}
+              className={`app-segment ${i <= currentIndex ? 'app-segment--active' : ''}`}
+            />
+          ))}
         </div>
-      </header>
-
-      {/* 2. Segmented Progress Bar */}
-      <div
-        className="app-segmented-progress"
-        role="progressbar"
-        aria-valuenow={currentIndex + 1}
-        aria-valuemin={1}
-        aria-valuemax={totalQuestions}
-      >
-        {Array.from({ length: totalQuestions }).map((_, i) => (
-          <div
-            key={i}
-            className={`app-segment ${i <= currentIndex ? 'app-segment--active' : ''}`}
-          />
-        ))}
-      </div>
 
       {/* 3. Main Question / Game Card */}
       <section className="app-card" aria-labelledby="app-question-heading">
@@ -248,6 +245,7 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
 
         <div className="app-card-spacer" aria-hidden="true" />
       </section>
+      </div>
 
       {/* 4. Bottom Sticky Action Dock */}
       <footer className="app-bottom-dock">

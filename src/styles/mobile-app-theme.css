@@ -40,25 +40,69 @@ body {
 }
 
 /* ==========================================================================
-   APP SHELL / MOBILE CONTAINER
+   APP SHELL / MOBILE CONTAINER (Full Edge-to-Edge on Any Phone)
    ========================================================================== */
 .app-screen {
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh;
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  background-color: var(--app-bg);
-  padding: max(env(safe-area-inset-top, 0px), 16px) 16px max(env(safe-area-inset-bottom, 0px), 88px);
-  gap: 14px;
-  box-sizing: border-box;
-  position: relative;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background-color: var(--app-bg) !important;
+  overflow: hidden !important;
+  position: relative !important;
+  box-sizing: border-box !important;
 }
 
-/* Wide screen variant for Passport and Profile */
 .app-screen--passport {
-  padding-bottom: 96px;
+  padding: 0 !important;
+}
+
+.app-screen-body {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding: 14px 16px 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+}
+
+/* ==========================================================================
+   STICKY BANNER HEADER (Official Summit Banner)
+   ========================================================================== */
+.app-sticky-header {
+  position: sticky !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  z-index: 100 !important;
+  background: #FFFFFF !important;
+  border-bottom: 1px solid var(--app-border, #E2E8F0) !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05) !important;
+  padding-top: env(safe-area-inset-top, 0px) !important;
+  margin: 0 !important;
+  line-height: 0 !important;
+  flex-shrink: 0 !important;
+  overflow: hidden !important;
+}
+
+.app-sticky-banner-img {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: 80px !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  margin: 0 auto !important;
 }
 
 /* ==========================================================================
@@ -385,21 +429,23 @@ body {
    STICKY BOTTOM ACTION DOCK
    ========================================================================== */
 .app-bottom-dock {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  max-width: 480px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px max(env(safe-area-inset-bottom, 0px), 14px);
-  background: #FFFFFF;
-  border-top: 1px solid var(--app-border);
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
-  box-sizing: border-box;
-  z-index: 50;
+  position: sticky !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 12px 16px max(env(safe-area-inset-bottom, 0px), 14px) !important;
+  background: #FFFFFF !important;
+  border-top: 1px solid var(--app-border) !important;
+  box-shadow: 0 -2px 10px rgba(15, 23, 42, 0.05) !important;
+  box-sizing: border-box !important;
+  z-index: 90 !important;
+  flex-shrink: 0 !important;
 }
 
 .app-dock-btn {
@@ -696,22 +742,24 @@ body {
    BOTTOM NAVIGATION BAR (Matching Sample Screen Tab Bar)
    ========================================================================== */
 .app-nav-dock {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  max-width: 480px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  height: 64px;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  background: #FFFFFF;
-  border-top: 1px solid var(--app-border);
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
-  box-sizing: content-box;
-  z-index: 100;
+  position: sticky !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-around !important;
+  height: 62px !important;
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 6px) !important;
+  background: #FFFFFF !important;
+  border-top: 1px solid var(--app-border) !important;
+  box-shadow: 0 -2px 10px rgba(15, 23, 42, 0.05) !important;
+  box-sizing: content-box !important;
+  z-index: 90 !important;
+  flex-shrink: 0 !important;
 }
 
 .app-nav-tab {
@@ -886,5 +934,177 @@ html, body {
 
 .ts-modal-title {
   color: #0F172A !important;
+}
+
+/* ==========================================================================
+   PARTICIPANT REGISTRATION & PASS PREVIEW (Light Theme Native Design)
+   ========================================================================== */
+.app-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.app-field-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--app-text-primary);
+}
+
+.app-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.app-input-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--app-text-muted);
+  pointer-events: none;
+}
+
+.app-text-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px 0 42px;
+  border-radius: 12px;
+  border: 1px solid var(--app-border);
+  background: #FFFFFF;
+  color: var(--app-text-primary);
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.app-text-input:focus {
+  border-color: var(--app-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.app-text-input--error {
+  border-color: var(--app-danger) !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
+}
+
+.app-field-error-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--app-danger);
+  margin-top: 2px;
+}
+
+/* Official Summit Pass Preview Card */
+.app-pass-card {
+  padding: 16px !important;
+}
+
+.app-pass-card__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.app-pass-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--app-primary);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.app-pass-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.app-pass-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--app-primary);
+  text-transform: uppercase;
+}
+
+.app-pass-name {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--app-text-primary);
+  margin: 1px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-pass-email {
+  font-size: 12px;
+  color: var(--app-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-pass-status-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--app-success-light);
+  color: var(--app-success);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   ZERO-GAP OVERRIDES (Guarantees Edge-to-Edge on Any Device)
+   ========================================================================== */
+html, body, #root {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #F4F6FB !important;
+  background-color: #F4F6FB !important;
+  background-image: none !important;
+  overflow-x: hidden !important;
+}
+
+.ts-layout,
+.ts-layout--wide,
+.ts-layout:not(.ts-layout--wide),
+.ts-layout__main,
+.app-shell-root,
+.app-shell-main {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #F4F6FB !important;
+  background-color: #F4F6FB !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.ts-layout::before,
+.ts-layout--wide::before,
+.ts-layout:not(.ts-layout--wide)::before {
+  display: none !important;
 }
 

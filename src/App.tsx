@@ -375,9 +375,10 @@ export default function App() {
     let unanswered = 0;
     qs.questions.forEach((q, idx) => {
       const sel = qs.answers[idx];
+      const targetCorrect = q.correctAnswer !== undefined ? q.correctAnswer : (q.gameData?.bugLineIndex ?? 0);
       if (sel === null || sel === undefined) {
         unanswered++;
-      } else if (sel === q.correctAnswer) {
+      } else if (sel === targetCorrect) {
         correct++;
       } else {
         incorrect++;
@@ -427,8 +428,8 @@ export default function App() {
       // Save booth result to local multi-booth store
       const answersList = persisted.questions.map((q, idx) => ({
         questionId: q.id,
-        selectedAnswer: persisted.answers[idx] !== null && persisted.answers[idx] !== undefined ? q.options[persisted.answers[idx]!] : null,
-        correct: persisted.answers[idx] === q.correctAnswer,
+        selectedAnswer: persisted.answers[idx] !== null && persisted.answers[idx] !== undefined ? (q.options ? q.options[persisted.answers[idx]!] : `Line ${persisted.answers[idx]! + 1}`) : null,
+        correct: persisted.answers[idx] === (q.correctAnswer !== undefined ? q.correctAnswer : (q.gameData?.bugLineIndex ?? 0)),
       }));
 
       const newBoothResult: BoothResult = {
@@ -533,7 +534,7 @@ export default function App() {
   return (
     <>
       {showCelebration && <ConfettiCelebration onComplete={() => setShowCelebration(false)} />}
-      {(stage !== 'WELCOME' && stage !== 'PASSPORT' || loadError) && (
+      {((stage !== 'WELCOME' && stage !== 'PASSPORT' && stage !== 'QUIZ' && stage !== 'RESULT' && stage !== 'PARTICIPANT' && stage !== 'ALREADY_PLAYED') || loadError) && (
         <Header
           completedCount={completedCount}
           isWinner={isWinner}

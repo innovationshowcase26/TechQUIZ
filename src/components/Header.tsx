@@ -1,4 +1,5 @@
 import { TicketIcon, TrophyIcon, CloseIcon } from './Icons';
+import { AppStickyHeader } from './AppStickyHeader';
 
 interface HeaderProps {
   completedCount?: number;
@@ -13,41 +14,43 @@ export function Header({
   onOpenPassport,
   isPassportActive = false,
 }: HeaderProps) {
-  if (!onOpenPassport) return null;
-
   return (
-    <header className="ts-header" aria-label="Challenge navigation">
-      <div className="ts-header__inner">
-        <div className="ts-header__brand">
-          <span className="ts-header__badge">INNOVATION SHOWCASE 2026</span>
-        </div>
-        <div className="ts-header__right">
+    <AppStickyHeader
+      subtitle="Innovation Showcase 2026"
+      rightAction={
+        onOpenPassport ? (
           <button
             type="button"
-            className={`ts-header__passport-btn ${isWinner ? 'ts-header__passport-btn--winner' : ''}`}
+            className="app-tag-pill"
             onClick={onOpenPassport}
             title="View your challenge passport and booth progress"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '999px',
+              background: isWinner ? 'var(--app-success-light)' : 'var(--app-primary-light)',
+              border: `1px solid ${isWinner ? 'var(--app-success)' : 'rgba(37, 99, 235, 0.25)'}`,
+              color: isWinner ? 'var(--app-success)' : 'var(--app-primary)',
+              fontWeight: 700,
+              fontSize: '12px',
+              cursor: 'pointer',
+            }}
           >
-            <span className="ts-header__passport-icon">
-              {isPassportActive ? <CloseIcon size={16} /> : isWinner ? <TrophyIcon size={16} /> : <TicketIcon size={16} />}
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              {isPassportActive ? <CloseIcon size={14} /> : isWinner ? <TrophyIcon size={14} /> : <TicketIcon size={14} />}
             </span>
-            <span className="ts-header__passport-text ts-header__passport-text--full">
+            <span>
               {isPassportActive
                 ? 'Close'
                 : isWinner
                 ? `Winner (${completedCount}/9)`
                 : `Passport (${completedCount}/4)`}
             </span>
-            <span className="ts-header__passport-text ts-header__passport-text--compact">
-              {isPassportActive
-                ? 'Close'
-                : isWinner
-                ? `Winner (${completedCount})`
-                : `${completedCount}/4`}
-            </span>
           </button>
-        </div>
-      </div>
-    </header>
+        ) : undefined
+      }
+    />
   );
 }

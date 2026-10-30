@@ -4,6 +4,7 @@ import { BOOTHS, MAX_BOOTHS_PER_PARTICIPANT, REQUIRED_BOOTHS_TO_WIN, TOTAL_BOOTH
 import { QRScannerModal } from '../components/QRScannerModal';
 import { parseBoothFromScan, playErrorSound } from '../utils/qrHelper';
 import { AlertCircleIcon } from '../components/Icons';
+import { AppStickyHeader } from '../components/AppStickyHeader';
 
 interface PassportProps {
   participant: Participant | null;
@@ -95,36 +96,32 @@ export function Passport({
 
   return (
     <div className="app-screen app-screen--passport" role="main">
-      {/* 1. App Top Nav Header */}
-      <header className="app-top-nav" aria-label="Passport Header">
-        <div className="app-nav-brand">
-          <div className="app-brand-badge" aria-hidden="true">
-            🎯
-          </div>
-          <div className="app-brand-titles">
-            <span className="app-brand-eyebrow">Innovation Showcase 2026</span>
-            <span className="app-brand-sub">Summit Passport</span>
-          </div>
-        </div>
+      {/* 1. Universal Sticky App Header with Wells Fargo Logo */}
+      <AppStickyHeader
+        subtitle="Summit Passport"
+        rightAction={
+          <button
+            type="button"
+            className="app-timer-badge"
+            onClick={() => handleOpenScanner(null)}
+            aria-label="Scan any booth QR code"
+            style={{ cursor: 'pointer' }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+              <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+              <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+              <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+              <line x1="7" y1="12" x2="17" y2="12" />
+            </svg>
+            <span>Scan QR</span>
+          </button>
+        }
+      />
 
-        <button
-          type="button"
-          className="app-timer-badge"
-          onClick={() => handleOpenScanner(null)}
-          aria-label="Scan any booth QR code"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M3 7V5a2 2 0 0 1 2-2h2" />
-            <path d="M17 3h2a2 2 0 0 1 2 2v2" />
-            <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
-            <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
-            <line x1="7" y1="12" x2="17" y2="12" />
-          </svg>
-          <span>Scan QR</span>
-        </button>
-      </header>
-
-      {/* 2. User Profile Card */}
+      {/* 2. Scrollable Middle Body */}
+      <div className="app-screen-body">
+      {/* User Profile Card */}
       <section className="app-passport-user-card" aria-label="Attendee profile">
         <div className="app-user-avatar" aria-hidden="true">
           {participant?.name ? participant.name.charAt(0).toUpperCase() : 'A'}
@@ -300,6 +297,8 @@ export function Passport({
         onScanSuccess={handleScanSuccess}
         targetBooth={scanTargetBooth}
       />
+
+      </div>
 
       {/* 5. Bottom Navigation Dock (Matching Sample Screenshot Tab Bar) */}
       <nav className="app-nav-dock" aria-label="Bottom Navigation">
