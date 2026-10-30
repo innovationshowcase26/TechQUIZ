@@ -1,15 +1,9 @@
 import { useMemo, useState, useCallback } from 'react';
 import type { Participant, BoothResult, BoothConfig } from '../types';
 import { BOOTHS, MAX_BOOTHS_PER_PARTICIPANT, REQUIRED_BOOTHS_TO_WIN, TOTAL_BOOTHS } from '../data/boothsConfig';
-import { Button } from '../components/Button';
 import { QRScannerModal } from '../components/QRScannerModal';
 import { parseBoothFromScan, playErrorSound } from '../utils/qrHelper';
-import {
-  getBoothIcon,
-  AlertCircleIcon,
-} from '../components/Icons';
-
-import { MobileNav } from '../components/MobileNav';
+import { AlertCircleIcon } from '../components/Icons';
 
 interface PassportProps {
   participant: Participant | null;
@@ -100,178 +94,270 @@ export function Passport({
   }, [scanTargetBooth, onLaunchBooth, onOpenUrl]);
 
   return (
-    <div className="ts-page ts-page--passport">
-      <div className="ts-page__container ts-page__container--wide">
-        {/* 1. Profile header row (no card) */}
-        <div className="ts-passport-profile-header">
-          <div className="ts-passport-avatar" aria-hidden="true">
-            {participant?.name ? participant.name.charAt(0).toUpperCase() : 'P'}
+    <div className="app-screen app-screen--passport" role="main">
+      {/* 1. App Top Nav Header */}
+      <header className="app-top-nav" aria-label="Passport Header">
+        <div className="app-nav-brand">
+          <div className="app-brand-badge" aria-hidden="true">
+            🎯
           </div>
-          <div className="ts-passport-user-info">
-            <span className="ts-passport-badge-tag">OFFICIAL SUMMIT PASSPORT</span>
-            <h1 className="ts-passport-user-name">
-              {participant ? participant.name : 'Summit Attendee'}
-            </h1>
-            {participant && (
-              <span className="ts-passport-user-email">{participant.email || participant.entId}</span>
-            )}
+          <div className="app-brand-titles">
+            <span className="app-brand-eyebrow">Innovation Showcase 2026</span>
+            <span className="app-brand-sub">Summit Passport</span>
           </div>
         </div>
 
-        {/* 2. Challenge progress card */}
-        <div className={`ts-qualification-banner ${isWinner ? 'ts-qualification-banner--winner' : 'ts-qualification-banner--progress'}`}>
-          <div className="ts-qualification-top-row">
-            <h2 className="ts-qualification-title">
-              {isWinner ? 'Summit Prize Qualifier & Winner!' : 'Challenge in progress'}
-            </h2>
-            <span className="ts-qualification-pill">
-              {isWinner ? 'Target Reached & Winner!' : `${completedCount} of ${REQUIRED_BOOTHS_TO_WIN} to win`}
+        <button
+          type="button"
+          className="app-timer-badge"
+          onClick={() => handleOpenScanner(null)}
+          aria-label="Scan any booth QR code"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+            <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+            <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+            <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+            <line x1="7" y1="12" x2="17" y2="12" />
+          </svg>
+          <span>Scan QR</span>
+        </button>
+      </header>
+
+      {/* 2. User Profile Card */}
+      <section className="app-passport-user-card" aria-label="Attendee profile">
+        <div className="app-user-avatar" aria-hidden="true">
+          {participant?.name ? participant.name.charAt(0).toUpperCase() : 'A'}
+        </div>
+        <div className="app-user-meta">
+          <span className="app-user-tag">Official Summit Pass</span>
+          <h1 className="app-user-name">{participant?.name || 'Summit Attendee'}</h1>
+          <span className="app-user-id">{participant?.email || participant?.entId || 'Innovation Explorer'}</span>
+        </div>
+        <span className={`app-status-badge ${isWinner ? 'app-status-badge--winner' : 'app-status-badge--progress'}`}>
+          {isWinner ? 'Prize Qualified' : `${completedCount}/${REQUIRED_BOOTHS_TO_WIN} Goal`}
+        </span>
+      </section>
+
+      {/* 3. Challenge Progress & 2x2 Metric Grid (Matching Sample App "Pending Issues") */}
+      <section className="app-card" aria-label="Challenge statistics">
+        <div className="app-section-header">
+          <div className="app-section-left">
+            <span className="app-section-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
             </span>
+            <h2 className="app-section-title">Challenge Progress</h2>
+          </div>
+          <span className="app-section-link">
+            {isWinner ? 'Target Achieved' : `${remainingToWin} needed to win`}
+          </span>
+        </div>
+
+        {/* Progress Bar */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div className="app-segmented-progress" style={{ height: '8px' }}>
+            <div
+              style={{
+                height: '100%',
+                borderRadius: '4px',
+                background: 'var(--app-primary)',
+                width: `${progressPercentage}%`,
+                transition: 'width 0.3s ease',
+              }}
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: 'var(--app-text-muted)' }}>
+            <span>{completedCount} of {REQUIRED_BOOTHS_TO_WIN} required (Max {MAX_BOOTHS_PER_PARTICIPANT})</span>
+            <span>{progressPercentage}% Completed</span>
+          </div>
+        </div>
+
+        {/* 2x2 Metric Tiles */}
+        <div className="app-metrics-grid">
+          <div className="app-metric-tile">
+            <span className="app-metric-value">{completedCount} / {TOTAL_BOOTHS}</span>
+            <span className="app-metric-label">Booths Played</span>
           </div>
 
-          <p className="ts-qualification-desc">
-            {isWinner
-              ? `Incredible achievement! You have completed ${completedCount} booth quizzes and reached the official target. Present this pass at the Summit helpdesk for your prize!`
-              : `Complete ${remainingToWin} more booth ${remainingToWin === 1 ? 'quiz' : 'quizzes'} to unlock official prize qualification.`}
-          </p>
+          <div className="app-metric-tile">
+            <span className="app-metric-value">{stats.totalScore}</span>
+            <span className="app-metric-label">Points Earned</span>
+          </div>
 
-          <div className="ts-passport-progress-bar-wrap">
-            <div className="ts-passport-progress-bar">
+          <div className="app-metric-tile">
+            <span className="app-metric-value">{stats.accuracy}%</span>
+            <span className="app-metric-label">Accuracy Rate</span>
+          </div>
+
+          <div className="app-metric-tile">
+            <span className="app-metric-value">{stats.avgTime}s</span>
+            <span className="app-metric-label">Avg Speed / Booth</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Booth Challenges Section (Matching Sample App "Latest Complaints" list) */}
+      <section className="app-card" aria-label="Available booth challenges">
+        <div className="app-section-header">
+          <div className="app-section-left">
+            <span className="app-section-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+              </svg>
+            </span>
+            <h2 className="app-section-title">Booth Challenges</h2>
+          </div>
+          <button
+            type="button"
+            className="app-section-link"
+            onClick={() => handleOpenScanner(null)}
+          >
+            Scan any QR
+          </button>
+        </div>
+
+        <div className="app-booth-list" role="list">
+          {BOOTHS.map((booth) => {
+            const res = boothResults[booth.id];
+            const isCompleted = Boolean(res);
+
+            return (
               <div
-                className="ts-passport-progress-fill"
-                style={{ width: `${progressPercentage}%` }}
-              />
-            </div>
-            <div className="ts-passport-progress-labels">
-              <span>{completedCount} played</span>
-              <span>Goal: {REQUIRED_BOOTHS_TO_WIN} quizzes {isWinner ? '(Target Reached!)' : ''}</span>
-              <span>Max: {TOTAL_BOOTHS} booths</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 3. Stats: ONE .glass card with a 2x2 grid & hairline dividers */}
-        <div className="ts-passport-stats-grid">
-          <div className={`ts-stat-cell ts-stat-cell--tl ${isWinner ? 'ts-stat-cell--winner' : ''}`}>
-            <span className="ts-stat-card__number">{completedCount}/{TOTAL_BOOTHS}</span>
-            <span className="ts-stat-card__label">{isWinner ? 'TARGET ACHIEVED' : 'BOOTHS PLAYED'}</span>
-          </div>
-          <div className="ts-stat-cell ts-stat-cell--tr">
-            <span className="ts-stat-card__number">{stats.totalScore}/{stats.totalQuestions}</span>
-            <span className="ts-stat-card__label">TOTAL SCORE</span>
-          </div>
-          <div className="ts-stat-cell ts-stat-cell--bl">
-            <span className="ts-stat-card__number">{stats.accuracy}%</span>
-            <span className="ts-stat-card__label">ACCURACY</span>
-          </div>
-          <div className="ts-stat-cell ts-stat-cell--br">
-            <span className="ts-stat-card__number">{stats.avgTime}s</span>
-            <span className="ts-stat-card__label">AVG TIME / BOOTH</span>
-          </div>
-        </div>
-
-        {/* 4. Booth status section */}
-        <div className="ts-booths-matrix-section">
-          <div className="ts-matrix-header" id="booth-status">
-            <div>
-              <h2 className="ts-matrix-title">Booth status</h2>
-              <span className="ts-matrix-subtitle">Choose up to {MAX_BOOTHS_PER_PARTICIPANT} of {TOTAL_BOOTHS} booths</span>
-            </div>
-            <button
-              type="button"
-              className={`ts-passport-scan-qr-btn ${hasReachedBoothLimit ? 'ts-passport-scan-qr-btn--limit' : ''}`}
-              onClick={() => handleOpenScanner(null)}
-              title="Open camera to scan any booth QR code"
-              disabled={hasReachedBoothLimit}
-            >
-              <span>{hasReachedBoothLimit ? 'Target reached' : 'Scan QR'}</span>
-            </button>
-          </div>
-
-          {hasReachedBoothLimit && (
-            <p className="ts-matrix-subtitle" role="status">
-              You have completed the maximum of {MAX_BOOTHS_PER_PARTICIPANT} booth quizzes.
-            </p>
-          )}
-
-          {/* 5. Booth rows */}
-          <div className="ts-booths-grid">
-            {BOOTHS.map((booth) => {
-              const res = boothResults[booth.id];
-              const isCompleted = Boolean(res);
-
-              return (
-                <div
-                  key={booth.id}
-                  className={`ts-booth-card ${isCompleted ? 'ts-booth-card--completed' : 'ts-booth-card--pending'}`}
-                  onClick={() => {
-                    if (!isCompleted && !hasReachedBoothLimit) {
-                      handleOpenScanner(booth);
-                    }
-                  }}
-                  role={!isCompleted && !hasReachedBoothLimit ? 'button' : undefined}
-                  tabIndex={!isCompleted && !hasReachedBoothLimit ? 0 : undefined}
-                >
-                  <div className="ts-booth-card__icon" aria-hidden="true">
-                    {getBoothIcon(booth.number, 22)}
+                key={booth.id}
+                role="listitem"
+                className={`app-booth-item ${!isCompleted && !hasReachedBoothLimit ? 'app-booth-item--clickable' : ''}`}
+                onClick={() => {
+                  if (!isCompleted && !hasReachedBoothLimit) {
+                    handleOpenScanner(booth);
+                  }
+                }}
+              >
+                <div className="app-booth-left">
+                  <div className="app-booth-number" aria-hidden="true">
+                    {booth.number}
                   </div>
-                  <div className="ts-booth-card__content">
-                    <div className="ts-booth-card__header-line">
-                      <span className="ts-booth-card__number">BOOTH {booth.number}</span>
-                      <span className={`ts-booth-card__status-pill ${isCompleted ? 'ts-pill-done' : 'ts-pill-todo'}`}>
-                        {isCompleted ? 'Completed' : 'Awaiting'}
-                      </span>
-                    </div>
-                    <h3 className="ts-booth-card__title">{booth.title}</h3>
-                    {isCompleted && res ? (
-                      <div className="ts-booth-card__stats-line">
-                        {res.score} / {res.totalQuestions} ({res.percentage}%) · {res.timeTakenSeconds}s
-                      </div>
-                    ) : (
-                      <p className="ts-booth-card__desc">{booth.description}</p>
-                    )}
+                  <div className="app-booth-info">
+                    <span className="app-booth-name">{booth.title}</span>
+                    <span className="app-booth-category">{booth.description}</span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+
+                {isCompleted && res ? (
+                  <span className="app-booth-status-pill app-booth-status-pill--done">
+                    Done ({res.score}/{res.totalQuestions} pts)
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="app-booth-status-pill app-booth-status-pill--action"
+                    disabled={hasReachedBoothLimit}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenScanner(booth);
+                    }}
+                  >
+                    Play / Scan
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
+      </section>
 
-        {/* Back / Navigation button */}
-        {hasActiveQuiz && onBackToCurrent && (
-          <div className="ts-passport-actions">
-            <Button onClick={onBackToCurrent} fullWidth>
-              RETURN TO CURRENT QUIZ
-            </Button>
-          </div>
-        )}
+      {/* Return to active quiz if applicable */}
+      {hasActiveQuiz && onBackToCurrent && (
+        <div style={{ width: '100%' }}>
+          <button
+            type="button"
+            className="app-dock-btn app-dock-btn--primary"
+            style={{ width: '100%' }}
+            onClick={onBackToCurrent}
+          >
+            Return to Current Quiz
+          </button>
+        </div>
+      )}
 
-        {/* Live Camera QR Scanner Modal */}
-        <QRScannerModal
-          isOpen={isScannerOpen}
-          onClose={() => setIsScannerOpen(false)}
-          onScanSuccess={handleScanSuccess}
-          targetBooth={scanTargetBooth}
-        />
+      {/* Toast Feedback */}
+      {toastMessage && (
+        <div className="ts-scanner-toast ts-scanner-toast--error" role="alert">
+          <span><AlertCircleIcon size={18} /></span>
+          <span>{toastMessage}</span>
+        </div>
+      )}
 
-        {/* Toast feedback */}
-        {toastMessage && (
-          <div className="ts-scanner-toast ts-scanner-toast--error" role="alert">
-            <span><AlertCircleIcon size={18} /></span>
-            <span>{toastMessage}</span>
-          </div>
-        )}
+      {/* Live Camera QR Scanner Modal */}
+      <QRScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScanSuccess={handleScanSuccess}
+        targetBooth={scanTargetBooth}
+      />
 
-        {/* Floating Mobile Nav */}
-        <MobileNav
-          activeItem="passport"
-          onHome={onGoHome}
-          onBooths={() => document.getElementById('booth-status')?.scrollIntoView({ behavior: 'smooth' })}
-          onPassport={() => handleOpenScanner(null)}
-          onFaqs={onGoHome}
-          onProfile={onEditProfile}
-        />
-      </div>
+      {/* 5. Bottom Navigation Dock (Matching Sample Screenshot Tab Bar) */}
+      <nav className="app-nav-dock" aria-label="Bottom Navigation">
+        <button
+          type="button"
+          className="app-nav-tab"
+          onClick={onGoHome}
+          aria-label="Home"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          <span>Home</span>
+        </button>
+
+        <button
+          type="button"
+          className="app-nav-tab app-nav-tab--active"
+          aria-label="Passport"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect width="18" height="18" x="3" y="3" rx="2" />
+            <path d="M3 9h18" />
+            <path d="M9 21V9" />
+          </svg>
+          <span>Passport</span>
+        </button>
+
+        <button
+          type="button"
+          className="app-nav-tab"
+          onClick={() => handleOpenScanner(null)}
+          aria-label="Scan QR Code"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+            <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+            <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+            <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+            <line x1="7" y1="12" x2="17" y2="12" />
+          </svg>
+          <span>Scan QR</span>
+        </button>
+
+        <button
+          type="button"
+          className="app-nav-tab"
+          onClick={onEditProfile}
+          aria-label="Profile"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+          <span>Profile</span>
+        </button>
+      </nav>
     </div>
   );
 }
