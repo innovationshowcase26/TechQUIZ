@@ -5,146 +5,135 @@ interface DnsFirefighterGameProps {
   onFinish: (won: boolean) => void;
   gameData?: {
     targetWhacks?: number;
-    duration?: number;
   };
 }
 
-const FALSE_ALARMS = [
-  { label: 'AC Temperature 21°C', isDns: false, icon: '❄️' },
-  { label: 'Coffee Machine Steam OK', isDns: false, icon: '☕' },
-  { label: 'CEO Laptop Wi-Fi Good', isDns: false, icon: '📶' },
-  { label: 'Office Plant Hydrated', isDns: false, icon: '🪴' },
-  { label: 'Slack Status: "In A Meeting"', isDns: false, icon: '💬' },
+const FALSE_BLADES = [
+  { name: 'Gateway Router', status: 'ONLINE', icon: '🌐' },
+  { name: 'Auth Keycloak', status: 'OPTIMAL', icon: '🔐' },
+  { name: 'Redis Cache', status: 'HIT 99%', icon: '⚡' },
+  { name: 'Postgres DB', status: 'NORMAL', icon: '🗄️' },
 ];
 
 export function DnsFirefighterGame({ onFinish, gameData }: DnsFirefighterGameProps) {
   const targetWhacks = gameData?.targetWhacks ?? 3;
-  const [timeLeft, setTimeLeft] = useState(15);
   const [whackedCount, setWhackedCount] = useState(0);
   const [activeSlot, setActiveSlot] = useState<number>(0);
   const [gameOver, setGameOver] = useState(false);
+  const [tapEffect, setTapEffect] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (gameOver) return;
-    const interval = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) {
-          clearInterval(interval);
-          setGameOver(true);
-          return 0;
-        }
-        return t - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [gameOver]);
-
-  // Jumble slot location of the DNS alert every 850ms
+  // Shift overheating DNS blade slot every 900ms to make it an active whacking game
   useEffect(() => {
     if (gameOver) return;
     const slotTimer = setInterval(() => {
       setActiveSlot(Math.floor(Math.random() * 4));
-    }, 850);
+    }, 900);
     return () => clearInterval(slotTimer);
   }, [gameOver]);
 
+  // Check victory
   useEffect(() => {
-    if (gameOver) return;
-    if (whackedCount >= targetWhacks) {
+    if (whackedCount >= targetWhacks && !gameOver) {
       setGameOver(true);
       playSuccessChime();
       setTimeout(() => onFinish(true), 1200);
-    } else if (timeLeft === 0) {
-      setGameOver(true);
-      playFailBuzz();
-      setTimeout(() => onFinish(false), 1300);
     }
-  }, [whackedCount, timeLeft, targetWhacks, gameOver, onFinish]);
+  }, [whackedCount, targetWhacks, gameOver, onFinish]);
 
-  const handleBoxClick = (index: number) => {
+  const handleBladeClick = (slotIdx: number) => {
     if (gameOver) return;
 
-    if (index === activeSlot) {
+    if (slotIdx === activeSlot) {
       playZapSound();
+      setTapEffect(slotIdx);
       setWhackedCount((w) => w + 1);
-      setActiveSlot(Math.floor(Math.random() * 4));
+      setActiveSlot((prev) => (prev + 1 + Math.floor(Math.random() * 3)) % 4);
+      setTimeout(() => setTapEffect(null), 350);
     } else {
       playFailBuzz();
-      setTimeLeft((t) => Math.max(0, t - 2));
     }
   };
 
-  const slots = [0, 1, 2, 3].map((slotIdx) => {
+  const blades = [0, 1, 2, 3].map((slotIdx) => {
     const isDns = slotIdx === activeSlot;
     if (isDns) {
       return {
         id: slotIdx,
-        label: '🚨 ROOT CAUSE: DNS NXDOMAIN TIMEOUT! 🔥',
-        isDns: true,
-        icon: '🌐',
+        title: 'DNS RESOLVER',
+        status: 'NXDOMAIN 100% 🔥',
+        subtext: 'TAP TO FLUSH!',
+        isAlarm: true,
+        icon: '🚨',
       };
     }
-    const falseAlarm = FALSE_ALARMS[(slotIdx + whackedCount) % FALSE_ALARMS.length];
+    const falseBlade = FALSE_BLADES[(slotIdx + whackedCount) % FALSE_BLADES.length];
     return {
       id: slotIdx,
-      label: falseAlarm.label,
-      isDns: false,
-      icon: falseAlarm.icon,
+      title: falseBlade.name,
+      status: falseBlade.status,
+      subtext: 'HEALTHY',
+      isAlarm: false,
+      icon: falseBlade.icon,
     };
   });
 
   return (
-    <div className="ts-game ts-game--dns">
-      <div className="ts-game__hud">
-        <div className="ts-game__metric">
-          <span className="ts-game__metric-label">TIME</span>
-          <span className={`ts-game__metric-val ${timeLeft <= 4 ? 'ts-text-danger' : ''}`}>
-            ⏱️ {timeLeft}s
-          </span>
+    <div className="ts-arcade-game ts-arcade-game--dns">
+      {/* Game HUD Bar */}
+      <div className="ts-arcade-hud">
+        <div className="ts-arcade-hud__mission">
+          <span className="ts-arcade-hud__icon">🚨</span>
+          <span>Tap the overheating <strong>DNS RESOLVER</strong> to flush the cache!</span>
         </div>
-        <div className="ts-game__instructions">
-          🚨 <strong>IT'S ALWAYS DNS!</strong> Rapidly tap the flashing DNS alert ({whackedCount}/{targetWhacks}) to flush the cache!
-        </div>
-        <div className="ts-game__metric">
-          <span className="ts-game__metric-label">FIXED</span>
-          <span className="ts-game__metric-val ts-text-emerald">
-            🧯 {whackedCount}/{targetWhacks}
-          </span>
+        <div className="ts-arcade-hud__progress">
+          <span className="ts-arcade-hud__label">FLUSHED</span>
+          <span className="ts-arcade-hud__value">{whackedCount}/{targetWhacks} 🧯</span>
         </div>
       </div>
 
-      <div className="ts-dns-grid">
-        {slots.map((slot, idx) => (
-          <button
-            key={idx}
-            type="button"
-            className={`ts-dns-slot ${slot.isDns ? 'ts-dns-slot--dns' : 'ts-dns-slot--safe'}`}
-            onClick={() => handleBoxClick(idx)}
-            disabled={gameOver}
-          >
-            <span className="ts-dns-slot__icon">{slot.icon}</span>
-            <span className="ts-dns-slot__label">{slot.label}</span>
-            {slot.isDns && <span className="ts-dns-slot__alert">TAP TO FLUSH DNS!</span>}
-          </button>
-        ))}
+      {/* Visual Server Rack */}
+      <div className="ts-server-rack">
+        <div className="ts-server-rack__header">
+          <div className="ts-rack-leds">
+            <span className="ts-rack-led ts-rack-led--red" />
+            <span className="ts-rack-led ts-rack-led--amber" />
+            <span className="ts-rack-led ts-rack-led--green" />
+          </div>
+          <span className="ts-server-rack__title">MAINFRAME CLUSTER #402 • STATUS: OUTAGE</span>
+          <span className="ts-server-rack__ping">ALARM ACTIVE</span>
+        </div>
+
+        <div className="ts-rack-blades">
+          {blades.map((blade, idx) => (
+            <button
+              key={idx}
+              type="button"
+              className={`ts-rack-blade ${blade.isAlarm ? 'ts-rack-blade--alarm' : 'ts-rack-blade--healthy'} ${tapEffect === idx ? 'ts-rack-blade--tapped' : ''}`}
+              onClick={() => handleBladeClick(idx)}
+              disabled={gameOver}
+            >
+              <div className="ts-rack-blade__left">
+                <span className="ts-rack-blade__icon">{blade.icon}</span>
+                <div className="ts-rack-blade__details">
+                  <span className="ts-rack-blade__name">{blade.title}</span>
+                  <span className="ts-rack-blade__subtext">{blade.subtext}</span>
+                </div>
+              </div>
+              <span className={`ts-rack-blade__status ${blade.isAlarm ? 'ts-rack-blade__status--alarm' : ''}`}>
+                {blade.status}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
+      {/* Victory Celebration Overlay */}
       {whackedCount >= targetWhacks && (
         <div className="ts-game-overlay ts-game-overlay--success">
           <div className="ts-game-overlay__card">
             <span className="ts-game-overlay__emoji">🧯</span>
-            <h3>Incident Resolved!</h3>
-            <p>It was DNS as usual! All services green.</p>
-          </div>
-        </div>
-      )}
-
-      {timeLeft === 0 && whackedCount < targetWhacks && (
-        <div className="ts-game-overlay ts-game-overlay--fail">
-          <div className="ts-game-overlay__card">
-            <span className="ts-game-overlay__emoji">🔥</span>
-            <h3>Outage Escalated!</h3>
-            <p>Paged entire executive leadership team.</p>
+            <h3>DNS Flushed & Resolved!</h3>
+            <p>Cluster restored to 100% operational status!</p>
           </div>
         </div>
       )}

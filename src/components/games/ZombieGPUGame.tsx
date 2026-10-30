@@ -5,8 +5,6 @@ interface ZombieGPUGameProps {
   onFinish: (won: boolean) => void;
   gameData?: {
     targetCount?: number;
-    duration?: number;
-    title?: string;
   };
 }
 
@@ -21,9 +19,9 @@ interface Target {
 }
 
 const ROGUE_TEMPLATES = [
-  { label: 'Idle H100 Cluster', cost: '$85/hr', icon: '🔥' },
-  { label: 'Zombie Dev Pod', cost: '$42/hr', icon: '🧟' },
-  { label: 'Forgotten Staging DB', cost: '$68/hr', icon: '💸' },
+  { label: 'Idle H100 GPU Cluster', cost: '$85/hr', icon: '🔥' },
+  { label: 'Zombie Dev Cluster', cost: '$42/hr', icon: '🧟' },
+  { label: 'Forgotten Staging Redis', cost: '$68/hr', icon: '💸' },
   { label: 'Unattached EBS 20TB', cost: '$55/hr', icon: '💾' },
   { label: 'Rogue Bitcoin Miner', cost: '$190/hr', icon: '⛏️' },
   { label: 'Abandoned GPU Worker', cost: '$95/hr', icon: '⚡' },
@@ -37,37 +35,18 @@ const SAFE_TEMPLATES = [
 
 export function ZombieGPUGame({ onFinish, gameData }: ZombieGPUGameProps) {
   const targetKills = gameData?.targetCount ?? 5;
-  const initialTime = gameData?.duration ?? 15;
-
-  const [timeLeft, setTimeLeft] = useState(initialTime);
   const [score, setScore] = useState(0);
   const [targets, setTargets] = useState<Target[]>([]);
   const [bursts, setBursts] = useState<{ id: number; x: number; y: number; text: string }[]>([]);
   const [gameOver, setGameOver] = useState(false);
   const nextTargetId = useRef(1);
 
-  // Timer countdown
-  useEffect(() => {
-    if (gameOver) return;
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setGameOver(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [gameOver]);
-
-  // Target spawner
+  // Spawner: keeps 2-3 targets floating on screen
   useEffect(() => {
     if (gameOver) return;
 
     const spawnTarget = () => {
-      const isRogue = Math.random() < 0.72; // 72% rogue, 28% safe trap
+      const isRogue = Math.random() < 0.75;
       const template = isRogue
         ? ROGUE_TEMPLATES[Math.floor(Math.random() * ROGUE_TEMPLATES.length)]
         : SAFE_TEMPLATES[Math.floor(Math.random() * SAFE_TEMPLATES.length)];
@@ -78,31 +57,27 @@ export function ZombieGPUGame({ onFinish, gameData }: ZombieGPUGameProps) {
         cost: template.cost,
         isRogue,
         icon: template.icon,
-        x: Math.floor(Math.random() * 46) + 27, // 27% to 73% safe center zone on phone
-        y: Math.floor(Math.random() * 52) + 22, // 22% to 74% safe vertical zone on phone
+        x: Math.floor(Math.random() * 46) + 27,
+        y: Math.floor(Math.random() * 50) + 22,
       };
 
-      setTargets((prev) => [...prev.slice(-2), newTarget]); // Max 3 nodes on screen for mobile
+      setTargets((prev) => [...prev.slice(-2), newTarget]);
     };
 
     spawnTarget();
     spawnTarget();
-    const spawnTimer = setInterval(spawnTarget, 1100);
+    const spawnTimer = setInterval(spawnTarget, 1200);
     return () => clearInterval(spawnTimer);
   }, [gameOver]);
 
-  // Check victory / defeat
+  // Check victory
   useEffect(() => {
     if (score >= targetKills && !gameOver) {
       setGameOver(true);
       playSuccessChime();
       setTimeout(() => onFinish(true), 1200);
-    } else if (timeLeft === 0 && !gameOver) {
-      setGameOver(true);
-      playFailBuzz();
-      setTimeout(() => onFinish(false), 1400);
     }
-  }, [score, timeLeft, targetKills, gameOver, onFinish]);
+  }, [score, targetKills, gameOver, onFinish]);
 
   const handleTap = (target: Target) => {
     if (gameOver) return;
@@ -113,10 +88,8 @@ export function ZombieGPUGame({ onFinish, gameData }: ZombieGPUGameProps) {
       setBursts((b) => [...b, { id: target.id, x: target.x, y: target.y, text: `TERMINATED! 💥` }]);
       setTargets((prev) => prev.filter((t) => t.id !== target.id));
     } else {
-      // Tapped a critical safe resource! Penalty!
       playFailBuzz();
-      setTimeLeft((t) => Math.max(0, t - 2));
-      setBursts((b) => [...b, { id: target.id, x: target.x, y: target.y, text: `PROD ALARM! -2s ⚠️` }]);
+      setBursts((b) => [...b, { id: target.id, x: target.x, y: target.y, text: `PROD DB ALARM! ⚠️` }]);
     }
 
     setTimeout(() => {
@@ -125,26 +98,24 @@ export function ZombieGPUGame({ onFinish, gameData }: ZombieGPUGameProps) {
   };
 
   return (
-    <div className="ts-game ts-game--zombie">
-      <div className="ts-game__hud">
-        <div className="ts-game__metric">
-          <span className="ts-game__metric-label">TIME</span>
-          <span className={`ts-game__metric-val ${timeLeft <= 4 ? 'ts-text-danger' : ''}`}>
-            ⏱️ {timeLeft}s
-          </span>
+    <div className="ts-arcade-game ts-arcade-game--cloud">
+      {/* Game HUD */}
+      <div className="ts-arcade-hud">
+        <div className="ts-arcade-hud__mission">
+          <span className="ts-arcade-hud__icon">🧟</span>
+          <span>Tap <strong>rogue GPU pods & idle servers</strong> to save cloud budget!</span>
         </div>
-        <div className="ts-game__instructions">
-          Tap rogue servers & idle GPUs! <strong>Save Cloud Budget</strong> (Avoid Prod DB!)
-        </div>
-        <div className="ts-game__metric">
-          <span className="ts-game__metric-label">TERMINATED</span>
-          <span className="ts-game__metric-val ts-text-emerald">
-            🎯 {score}/{targetKills}
-          </span>
+        <div className="ts-arcade-hud__progress">
+          <span className="ts-arcade-hud__label">TERMINATED</span>
+          <span className="ts-arcade-hud__value">{score}/{targetKills} 💥</span>
         </div>
       </div>
 
-      <div className="ts-game__arena ts-game__arena--cloud">
+      {/* Sci-Fi Radar Arena */}
+      <div className="ts-radar-arena">
+        <div className="ts-radar-grid" />
+        <div className="ts-radar-sweep" />
+
         {targets.map((t) => (
           <button
             key={t.id}
@@ -158,7 +129,7 @@ export function ZombieGPUGame({ onFinish, gameData }: ZombieGPUGameProps) {
               <span className="ts-cloud-node__title">{t.label}</span>
               <span className="ts-cloud-node__cost">{t.cost}</span>
             </div>
-            <span className="ts-cloud-node__badge">{t.isRogue ? 'TERMINATE' : 'KEEP'}</span>
+            <span className="ts-cloud-node__badge">{t.isRogue ? 'TERMINATE 💥' : 'KEEP 🛡️'}</span>
           </button>
         ))}
 
@@ -178,17 +149,7 @@ export function ZombieGPUGame({ onFinish, gameData }: ZombieGPUGameProps) {
           <div className="ts-game-overlay__card">
             <span className="ts-game-overlay__emoji">🎉</span>
             <h3>Cloud Budget Saved!</h3>
-            <p>You terminated {score} rogue instances and saved $18,000/mo!</p>
-          </div>
-        </div>
-      )}
-
-      {timeLeft === 0 && score < targetKills && (
-        <div className="ts-game-overlay ts-game-overlay--fail">
-          <div className="ts-game-overlay__card">
-            <span className="ts-game-overlay__emoji">💸</span>
-            <h3>Cloud Budget Exceeded!</h3>
-            <p>Only caught {score}/{targetKills}. FinOps team is sending an email.</p>
+            <p>You terminated {score} rogue instances and defended corporate spend!</p>
           </div>
         </div>
       )}

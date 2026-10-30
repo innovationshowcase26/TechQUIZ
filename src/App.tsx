@@ -385,7 +385,7 @@ export default function App() {
     });
 
     const endTime = qs.endTime ?? Date.now();
-    const timeTaken = Math.min(60, Math.floor((endTime - qs.startTime) / 1000));
+    const timeTaken = Math.min(90, Math.floor((endTime - qs.startTime) / 1000));
     const total = qs.questions.length;
     const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
 

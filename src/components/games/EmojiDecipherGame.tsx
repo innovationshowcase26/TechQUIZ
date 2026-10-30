@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { playSuccessChime, playFailBuzz } from '../../utils/qrHelper';
 
 interface EmojiDecipherGameProps {
@@ -54,26 +54,8 @@ const DEFAULT_PUZZLES = [
 export function EmojiDecipherGame({ onFinish, gameData }: EmojiDecipherGameProps) {
   const puzzle = gameData?.emojis ? gameData : DEFAULT_PUZZLES[Math.floor(Math.random() * DEFAULT_PUZZLES.length)];
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = useState(15);
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
-
-  useEffect(() => {
-    if (gameOver) return;
-    const interval = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) {
-          clearInterval(interval);
-          setGameOver(true);
-          playFailBuzz();
-          setTimeout(() => onFinish(false), 1300);
-          return 0;
-        }
-        return t - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [gameOver, onFinish]);
 
   const handleSelect = (idx: number) => {
     if (gameOver || selectedIdx !== null) return;
@@ -92,49 +74,47 @@ export function EmojiDecipherGame({ onFinish, gameData }: EmojiDecipherGameProps
   };
 
   return (
-    <div className="ts-game ts-game--emoji">
-      <div className="ts-game__hud">
-        <div className="ts-game__metric">
-          <span className="ts-game__metric-label">TIME</span>
-          <span className={`ts-game__metric-val ${timeLeft <= 4 ? 'ts-text-danger' : ''}`}>
-            ⏱️ {timeLeft}s
-          </span>
+    <div className="ts-arcade-game ts-arcade-game--emoji">
+      {/* Game HUD */}
+      <div className="ts-arcade-hud">
+        <div className="ts-arcade-hud__mission">
+          <span className="ts-arcade-hud__icon">🧩</span>
+          <span>Decipher the <strong>tech stack equation</strong> below!</span>
         </div>
-        <div className="ts-game__instructions">
-          🧩 <strong>TECH EMOJI REBUS!</strong> Decipher the technology equation!
-        </div>
-        <div className="ts-game__metric">
-          <span className="ts-game__metric-label">POINTS</span>
-          <span className="ts-game__metric-val ts-text-emerald">⭐ 1 PTS</span>
+        <div className="ts-arcade-hud__progress">
+          <span className="ts-arcade-hud__label">BONUS</span>
+          <span className="ts-arcade-hud__value">+1 PTS ⭐</span>
         </div>
       </div>
 
-      <div className="ts-emoji-stage">
-        <div className="ts-emoji-stage__equation">{puzzle.emojis}</div>
-        <div className="ts-emoji-stage__clue">💡 Clue: {puzzle.clue}</div>
+      {/* Arcade Marquee Stage */}
+      <div className="ts-emoji-marquee">
+        <div className="ts-emoji-marquee__equation">{puzzle.emojis}</div>
+        <div className="ts-emoji-marquee__clue">💡 Clue: {puzzle.clue}</div>
       </div>
 
-      <div className="ts-emoji-options">
+      {/* Option Cards */}
+      <div className="ts-emoji-grid">
         {puzzle.options.map((opt, idx) => {
           const isSelected = selectedIdx === idx;
           const isCorrect = idx === puzzle.correctIndex;
           let btnClass = '';
           if (isSelected) {
-            btnClass = isCorrect ? 'ts-emoji-btn--correct' : 'ts-emoji-btn--wrong';
+            btnClass = isCorrect ? 'ts-emoji-card--correct' : 'ts-emoji-card--wrong';
           } else if (gameOver && isCorrect) {
-            btnClass = 'ts-emoji-btn--correct';
+            btnClass = 'ts-emoji-card--correct';
           }
 
           return (
             <button
               key={idx}
               type="button"
-              className={`ts-emoji-btn ${btnClass}`}
+              className={`ts-emoji-card ${btnClass}`}
               onClick={() => handleSelect(idx)}
               disabled={gameOver}
             >
-              <span className="ts-emoji-btn__letter">{String.fromCharCode(65 + idx)}</span>
-              <span className="ts-emoji-btn__text">{opt}</span>
+              <span className="ts-emoji-card__letter">{String.fromCharCode(65 + idx)}</span>
+              <span className="ts-emoji-card__text">{opt}</span>
             </button>
           );
         })}
@@ -144,17 +124,7 @@ export function EmojiDecipherGame({ onFinish, gameData }: EmojiDecipherGameProps
         <div className="ts-game-overlay ts-game-overlay--success">
           <div className="ts-game-overlay__card">
             <span className="ts-game-overlay__emoji">🎉</span>
-            <h3>Decoded Successfully!</h3>
-            <p>{puzzle.explanation}</p>
-          </div>
-        </div>
-      )}
-
-      {gameOver && !won && (
-        <div className="ts-game-overlay ts-game-overlay--fail">
-          <div className="ts-game-overlay__card">
-            <span className="ts-game-overlay__emoji">🙈</span>
-            <h3>Missed It!</h3>
+            <h3>Equation Deciphered!</h3>
             <p>{puzzle.explanation}</p>
           </div>
         </div>

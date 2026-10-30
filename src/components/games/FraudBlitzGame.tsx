@@ -4,7 +4,6 @@ import { playSuccessChime, playFailBuzz, playZapSound } from '../../utils/qrHelp
 interface FraudBlitzGameProps {
   onFinish: (won: boolean) => void;
   gameData?: {
-    targetCount?: number;
     transactions?: Array<{
       id: string;
       amount: string;
@@ -49,14 +48,6 @@ const DEFAULT_TRANSACTIONS = [
     isFraud: true,
     reason: 'Wire to shell company registered 2 minutes ago.',
   },
-  {
-    id: 'tx5',
-    amount: '$14.99',
-    merchant: 'GitHub Copilot Subscription',
-    location: 'Corporate Card Automated Recurring',
-    isFraud: false,
-    reason: 'Standard monthly verified software subscription.',
-  },
 ];
 
 export function FraudBlitzGame({ onFinish, gameData }: FraudBlitzGameProps) {
@@ -66,23 +57,7 @@ export function FraudBlitzGame({ onFinish, gameData }: FraudBlitzGameProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [feedback, setFeedback] = useState<{ isCorrect: boolean; text: string } | null>(null);
-  const [timeLeft, setTimeLeft] = useState(18);
   const [gameOver, setGameOver] = useState(false);
-
-  useEffect(() => {
-    if (gameOver) return;
-    const interval = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) {
-          clearInterval(interval);
-          setGameOver(true);
-          return 0;
-        }
-        return t - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [gameOver]);
 
   useEffect(() => {
     if (gameOver) return;
@@ -90,16 +65,16 @@ export function FraudBlitzGame({ onFinish, gameData }: FraudBlitzGameProps) {
       setGameOver(true);
       playSuccessChime();
       setTimeout(() => onFinish(true), 1200);
-    } else if (currentIndex >= list.length || timeLeft === 0) {
+    } else if (currentIndex >= list.length) {
       setGameOver(true);
       const won = correctCount >= targetPass;
       if (won) playSuccessChime();
       else playFailBuzz();
-      setTimeout(() => onFinish(won), 1400);
+      setTimeout(() => onFinish(won), 1300);
     }
-  }, [correctCount, currentIndex, list.length, timeLeft, targetPass, gameOver, onFinish]);
+  }, [correctCount, currentIndex, list.length, targetPass, gameOver, onFinish]);
 
-  const currentTx = list[currentIndex];
+  const currentTx = list[currentIndex % list.length];
 
   const handleDecision = (userFlaggedFraud: boolean) => {
     if (gameOver || !currentTx || feedback) return;
@@ -121,31 +96,26 @@ export function FraudBlitzGame({ onFinish, gameData }: FraudBlitzGameProps) {
   };
 
   return (
-    <div className="ts-game ts-game--fraud">
-      <div className="ts-game__hud">
-        <div className="ts-game__metric">
-          <span className="ts-game__metric-label">TIME</span>
-          <span className={`ts-game__metric-val ${timeLeft <= 4 ? 'ts-text-danger' : ''}`}>
-            ⏱️ {timeLeft}s
-          </span>
+    <div className="ts-arcade-game ts-arcade-game--fraud">
+      {/* Game HUD */}
+      <div className="ts-arcade-hud">
+        <div className="ts-arcade-hud__mission">
+          <span className="ts-arcade-hud__icon">🏦</span>
+          <span>Risk Gate: <strong>APPROVE</strong> routine vs <strong>BLOCK</strong> fraud!</span>
         </div>
-        <div className="ts-game__instructions">
-          🏦 <strong>RISK INTELLIGENCE:</strong> Approve or Block fast-incoming transactions!
-        </div>
-        <div className="ts-game__metric">
-          <span className="ts-game__metric-label">RESOLVED</span>
-          <span className="ts-game__metric-val ts-text-emerald">
-            💳 {correctCount}/{targetPass}
-          </span>
+        <div className="ts-arcade-hud__progress">
+          <span className="ts-arcade-hud__label">VERIFIED</span>
+          <span className="ts-arcade-hud__value">{correctCount}/{targetPass} 💳</span>
         </div>
       </div>
 
-      <div className="ts-game__arena ts-game__arena--card-stage">
+      {/* Fintech Terminal Stage */}
+      <div className="ts-fintech-stage">
         {currentTx ? (
           <div className={`ts-fraud-card ${feedback ? (feedback.isCorrect ? 'ts-fraud-card--correct' : 'ts-fraud-card--wrong') : ''}`}>
             <div className="ts-fraud-card__header">
-              <span className="ts-fraud-card__badge">INCOMING SETTLEMENT</span>
-              <span className="ts-fraud-card__index">{currentIndex + 1} of {list.length}</span>
+              <span className="ts-fraud-card__badge">SETTLEMENT STREAM</span>
+              <span className="ts-fraud-card__index">TX #{currentIndex + 1}</span>
             </div>
 
             <div className="ts-fraud-card__amount">{currentTx.amount}</div>
@@ -160,6 +130,7 @@ export function FraudBlitzGame({ onFinish, gameData }: FraudBlitzGameProps) {
           </div>
         ) : null}
 
+        {/* Big Touch Buttons */}
         <div className="ts-fraud-actions">
           <button
             type="button"
@@ -182,6 +153,16 @@ export function FraudBlitzGame({ onFinish, gameData }: FraudBlitzGameProps) {
           </button>
         </div>
       </div>
+
+      {correctCount >= targetPass && (
+        <div className="ts-game-overlay ts-game-overlay--success">
+          <div className="ts-game-overlay__card">
+            <span className="ts-game-overlay__emoji">🏦</span>
+            <h3>Treasury Protected!</h3>
+            <p>Risk intelligence agent cleared authentic transactions and blocked fraud!</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

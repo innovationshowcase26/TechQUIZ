@@ -4,7 +4,6 @@ import { playSuccessChime, playFailBuzz, playZapSound } from '../../utils/qrHelp
 interface PhishSwipeGameProps {
   onFinish: (won: boolean) => void;
   gameData?: {
-    rounds?: number;
     cards?: Array<{
       sender: string;
       subject: string;
@@ -44,13 +43,6 @@ const DEFAULT_CARDS = [
     isPhish: false,
     explanation: 'Standard verified cloud monitoring alarm.',
   },
-  {
-    sender: 'HR Bonus Rewards (hr-perks@free-crypto-giveaway.ru)',
-    subject: 'You have been awarded $5,000 Diwali Bonus!',
-    preview: 'Connect your MetaMask wallet or enter corporate SSO to claim instant crypto bonus.',
-    isPhish: true,
-    explanation: 'Suspicious external domain offering ridiculous bonus bait!',
-  },
 ];
 
 export function PhishSwipeGame({ onFinish, gameData }: PhishSwipeGameProps) {
@@ -61,22 +53,6 @@ export function PhishSwipeGame({ onFinish, gameData }: PhishSwipeGameProps) {
   const [correctCount, setCorrectCount] = useState(0);
   const [feedback, setFeedback] = useState<{ isCorrect: boolean; text: string } | null>(null);
   const [gameOver, setGameOver] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(20);
-
-  useEffect(() => {
-    if (gameOver) return;
-    const interval = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) {
-          clearInterval(interval);
-          setGameOver(true);
-          return 0;
-        }
-        return t - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [gameOver]);
 
   useEffect(() => {
     if (gameOver) return;
@@ -84,16 +60,16 @@ export function PhishSwipeGame({ onFinish, gameData }: PhishSwipeGameProps) {
       setGameOver(true);
       playSuccessChime();
       setTimeout(() => onFinish(true), 1200);
-    } else if (currentIndex >= cards.length || timeLeft === 0) {
+    } else if (currentIndex >= cards.length) {
       setGameOver(true);
       const won = correctCount >= targetCorrect;
       if (won) playSuccessChime();
       else playFailBuzz();
-      setTimeout(() => onFinish(won), 1400);
+      setTimeout(() => onFinish(won), 1300);
     }
-  }, [correctCount, currentIndex, cards.length, timeLeft, targetCorrect, gameOver, onFinish]);
+  }, [correctCount, currentIndex, cards.length, targetCorrect, gameOver, onFinish]);
 
-  const currentCard = cards[currentIndex];
+  const currentCard = cards[currentIndex % cards.length];
 
   const handleDecision = (userSaidPhish: boolean) => {
     if (gameOver || !currentCard || feedback) return;
@@ -111,59 +87,49 @@ export function PhishSwipeGame({ onFinish, gameData }: PhishSwipeGameProps) {
     setTimeout(() => {
       setFeedback(null);
       setCurrentIndex((idx) => idx + 1);
-    }, 900);
+    }, 850);
   };
 
   return (
-    <div className="ts-game ts-game--swipe">
-      <div className="ts-game__hud">
-        <div className="ts-game__metric">
-          <span className="ts-game__metric-label">TIME</span>
-          <span className={`ts-game__metric-val ${timeLeft <= 5 ? 'ts-text-danger' : ''}`}>
-            ⏱️ {timeLeft}s
-          </span>
+    <div className="ts-arcade-game ts-arcade-game--swipe">
+      {/* Game HUD */}
+      <div className="ts-arcade-hud">
+        <div className="ts-arcade-hud__mission">
+          <span className="ts-arcade-hud__icon">🛡️</span>
+          <span>Zero Trust Gate: Classify request as <strong>PHISH</strong> or <strong>LEGIT</strong>!</span>
         </div>
-        <div className="ts-game__instructions">
-          Zero Trust CISO Challenge: <strong>PHISH 🚫</strong> or <strong>LEGIT ✅</strong>?
-        </div>
-        <div className="ts-game__metric">
-          <span className="ts-game__metric-label">SCORE</span>
-          <span className="ts-game__metric-val ts-text-emerald">
-            🛡️ {correctCount}/{targetCorrect}
-          </span>
+        <div className="ts-arcade-hud__progress">
+          <span className="ts-arcade-hud__label">TRIAGED</span>
+          <span className="ts-arcade-hud__value">{correctCount}/{targetCorrect} ⭐</span>
         </div>
       </div>
 
-      <div className="ts-game__arena ts-game__arena--card-stage">
+      {/* Modern Email Client Stage */}
+      <div className="ts-email-stage">
         {currentCard ? (
-          <div className={`ts-phish-card ${feedback ? (feedback.isCorrect ? 'ts-phish-card--correct' : 'ts-phish-card--wrong') : ''}`}>
-            <div className="ts-phish-card__header">
-              <span className="ts-phish-card__badge">INCOMING INBOX REQUEST</span>
-              <span className="ts-phish-card__count">Card {currentIndex + 1} of {cards.length}</span>
+          <div className={`ts-email-card ${feedback ? (feedback.isCorrect ? 'ts-email-card--correct' : 'ts-email-card--wrong') : ''}`}>
+            <div className="ts-email-card__top">
+              <div className="ts-email-avatar">✉️</div>
+              <div className="ts-email-headers">
+                <div className="ts-email-sender">{currentCard.sender}</div>
+                <div className="ts-email-subject">{currentCard.subject}</div>
+              </div>
+              <span className="ts-email-counter">REQ #{currentIndex + 1}</span>
             </div>
 
-            <div className="ts-phish-card__sender">
-              <span className="ts-phish-card__label">FROM:</span>
-              <span className="ts-phish-card__value">{currentCard.sender}</span>
-            </div>
-
-            <div className="ts-phish-card__subject">
-              <span className="ts-phish-card__label">SUBJ:</span>
-              <span className="ts-phish-card__value">{currentCard.subject}</span>
-            </div>
-
-            <div className="ts-phish-card__body">
+            <div className="ts-email-body">
               <p>"{currentCard.preview}"</p>
             </div>
 
             {feedback && (
-              <div className={`ts-phish-card__feedback ${feedback.isCorrect ? 'ts-text-emerald' : 'ts-text-danger'}`}>
+              <div className={`ts-email-feedback ${feedback.isCorrect ? 'ts-text-emerald' : 'ts-text-danger'}`}>
                 {feedback.text}
               </div>
             )}
           </div>
         ) : null}
 
+        {/* Big Tactile Arcade Action Buttons */}
         <div className="ts-phish-actions">
           <button
             type="button"
@@ -172,7 +138,7 @@ export function PhishSwipeGame({ onFinish, gameData }: PhishSwipeGameProps) {
             disabled={Boolean(feedback) || gameOver}
           >
             <span className="ts-phish-btn__icon">🚫</span>
-            <span className="ts-phish-btn__text">PHISHING / BLOCK</span>
+            <span className="ts-phish-btn__text">BLOCK / PHISH</span>
           </button>
 
           <button
@@ -182,10 +148,20 @@ export function PhishSwipeGame({ onFinish, gameData }: PhishSwipeGameProps) {
             disabled={Boolean(feedback) || gameOver}
           >
             <span className="ts-phish-btn__icon">✅</span>
-            <span className="ts-phish-btn__text">LEGITIMATE / ALLOW</span>
+            <span className="ts-phish-btn__text">VERIFY / LEGIT</span>
           </button>
         </div>
       </div>
+
+      {correctCount >= targetCorrect && (
+        <div className="ts-game-overlay ts-game-overlay--success">
+          <div className="ts-game-overlay__card">
+            <span className="ts-game-overlay__emoji">🛡️</span>
+            <h3>Zero Trust Defended!</h3>
+            <p>You caught all malicious intrusions with zero security breaches!</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

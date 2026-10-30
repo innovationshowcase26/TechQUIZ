@@ -1,19 +1,18 @@
-import { useState, useEffect } from 'react';
-import { playSuccessChime, playFailBuzz, playZapSound } from '../../utils/qrHelper';
+import { useState } from 'react';
+import { playSuccessChime, playZapSound } from '../../utils/qrHelper';
 
 interface PipelineOrderGameProps {
   onFinish: (won: boolean) => void;
   gameData?: {
-    title?: string;
     steps: Array<{ id: string; label: string; icon: string; order: number }>;
   };
 }
 
 const DEFAULT_PIPELINE = [
-  { id: 'p1', label: '1. Lint & Code Quality', icon: '🧹', order: 0 },
+  { id: 'p1', label: '1. Lint & Code Quality Check', icon: '🧹', order: 0 },
   { id: 'p2', label: '2. Run Automated Unit Tests', icon: '🧪', order: 1 },
   { id: 'p3', label: '3. Peer Code Review & Security Gate', icon: '🛡️', order: 2 },
-  { id: 'p4', label: '4. Canary Deployment to Production', icon: '🚀', order: 3 },
+  { id: 'p4', label: '4. Blue-Green Production Deploy', icon: '🚀', order: 3 },
 ];
 
 export function PipelineOrderGame({ onFinish, gameData }: PipelineOrderGameProps) {
@@ -23,26 +22,8 @@ export function PipelineOrderGame({ onFinish, gameData }: PipelineOrderGameProps
     return [...targetSteps].sort(() => Math.random() - 0.5);
   });
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = useState(20);
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
-
-  useEffect(() => {
-    if (gameOver) return;
-    const interval = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) {
-          clearInterval(interval);
-          setGameOver(true);
-          playFailBuzz();
-          setTimeout(() => onFinish(false), 1300);
-          return 0;
-        }
-        return t - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [gameOver, onFinish]);
 
   const handleCardClick = (idx: number) => {
     if (gameOver) return;
@@ -73,46 +54,55 @@ export function PipelineOrderGame({ onFinish, gameData }: PipelineOrderGameProps
     }
   };
 
+  const correctCount = currentOrder.filter((item, i) => item.order === i).length;
+
   return (
-    <div className="ts-game ts-game--pipeline">
-      <div className="ts-game__hud">
-        <div className="ts-game__metric">
-          <span className="ts-game__metric-label">TIME</span>
-          <span className={`ts-game__metric-val ${timeLeft <= 4 ? 'ts-text-danger' : ''}`}>
-            ⏱️ {timeLeft}s
-          </span>
+    <div className="ts-arcade-game ts-arcade-game--pipeline">
+      {/* Game HUD */}
+      <div className="ts-arcade-hud">
+        <div className="ts-arcade-hud__mission">
+          <span className="ts-arcade-hud__icon">⚡</span>
+          <span>Tap <strong>any two stages</strong> to swap into deployment order!</span>
         </div>
-        <div className="ts-game__instructions">
-          ⚡ <strong>CI/CD CHAOS!</strong> Tap two blocks to swap them into the correct deployment order!
-        </div>
-        <div className="ts-game__metric">
-          <span className="ts-game__metric-label">STATUS</span>
-          <span className="ts-game__metric-val ts-text-emerald">
-            {won ? '✅ SHIPPED' : '🔨 IN PIPELINE'}
-          </span>
+        <div className="ts-arcade-hud__progress">
+          <span className="ts-arcade-hud__label">PIPELINE</span>
+          <span className="ts-arcade-hud__value">{correctCount}/4 IN ORDER</span>
         </div>
       </div>
 
-      <div className="ts-pipeline-track">
+      {/* Visual Pipeline Conveyor */}
+      <div className="ts-conveyor-track">
         {currentOrder.map((step, idx) => {
           const isSelected = selectedIdx === idx;
           const isCorrectPos = step.order === idx;
 
           return (
-            <button
-              key={step.id}
-              type="button"
-              className={`ts-pipeline-block ${isSelected ? 'ts-pipeline-block--selected' : ''} ${isCorrectPos ? 'ts-pipeline-block--correct' : ''}`}
-              onClick={() => handleCardClick(idx)}
-              disabled={gameOver}
-            >
-              <div className="ts-pipeline-block__number">STEP {idx + 1}</div>
-              <div className="ts-pipeline-block__icon">{step.icon}</div>
-              <div className="ts-pipeline-block__label">{step.label}</div>
-              <div className="ts-pipeline-block__hint">
-                {isSelected ? 'TAP TO SWAP ⇄' : (isCorrectPos ? '✓ IN POSITION' : 'SWAP')}
-              </div>
-            </button>
+            <div key={step.id} className="ts-conveyor-slot">
+              <button
+                type="button"
+                className={`ts-pipeline-card ${isSelected ? 'ts-pipeline-card--selected' : ''} ${isCorrectPos ? 'ts-pipeline-card--correct' : ''}`}
+                onClick={() => handleCardClick(idx)}
+                disabled={gameOver}
+              >
+                <div className="ts-pipeline-card__badge">
+                  <span>STAGE {idx + 1}</span>
+                  {isCorrectPos && <span className="ts-badge-check">✓</span>}
+                </div>
+                <div className="ts-pipeline-card__body">
+                  <span className="ts-pipeline-card__icon">{step.icon}</span>
+                  <span className="ts-pipeline-card__label">{step.label}</span>
+                </div>
+                <span className="ts-pipeline-card__action">
+                  {isSelected ? '⇄ TAP SECOND STAGE TO SWAP' : (isCorrectPos ? '✓ LOCKED' : 'TAP TO MOVE')}
+                </span>
+              </button>
+
+              {idx < currentOrder.length - 1 && (
+                <div className={`ts-pipeline-arrow ${isCorrectPos ? 'ts-pipeline-arrow--active' : ''}`}>
+                  ➔
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
@@ -121,18 +111,8 @@ export function PipelineOrderGame({ onFinish, gameData }: PipelineOrderGameProps
         <div className="ts-game-overlay ts-game-overlay--success">
           <div className="ts-game-overlay__card">
             <span className="ts-game-overlay__emoji">🚀</span>
-            <h3>Pipeline Green!</h3>
-            <p>Code tested, reviewed, and deployed without a hitch!</p>
-          </div>
-        </div>
-      )}
-
-      {gameOver && !won && (
-        <div className="ts-game-overlay ts-game-overlay--fail">
-          <div className="ts-game-overlay__card">
-            <span className="ts-game-overlay__emoji">🛑</span>
-            <h3>Pipeline Blocked!</h3>
-            <p>Deploying without testing caused a rollback!</p>
+            <h3>CI/CD Pipeline Shipped!</h3>
+            <p>Code built, tested, reviewed, and deployed to production!</p>
           </div>
         </div>
       )}
