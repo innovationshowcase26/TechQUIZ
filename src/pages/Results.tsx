@@ -17,7 +17,6 @@ export function Results({
   boothNumber,
   completedCount,
   onDone,
-  downloadError,
 }: ResultsProps) {
   const isWinner = completedCount >= REQUIRED_BOOTHS_TO_WIN;
   const remaining = Math.max(0, REQUIRED_BOOTHS_TO_WIN - completedCount);
@@ -30,10 +29,6 @@ export function Results({
   } else if (result.percentage >= 60) {
     rankText = 'Top 35% • Senior Practitioner';
   }
-
-  const handlePlayAgain = () => {
-    window.location.reload();
-  };
 
   return (
     <div className="app-screen" role="main">
@@ -109,12 +104,6 @@ export function Results({
             </div>
           </div>
 
-          {downloadError && (
-            <p className="ts-error-message" role="alert">
-              {downloadError}
-            </p>
-          )}
-
           <div className="app-card-spacer" aria-hidden="true" />
         </div>
       </div>
@@ -124,9 +113,9 @@ export function Results({
         <button
           type="button"
           className="app-dock-btn app-dock-btn--secondary"
-          onClick={handlePlayAgain}
+          onClick={onDone}
         >
-          Play again
+          Explore Booths
         </button>
 
         <button

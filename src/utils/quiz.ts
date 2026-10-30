@@ -14,8 +14,19 @@ export interface ShuffledQuestion extends QuizQuestion {
 }
 
 export function prepareQuestions(allQuestions: QuizQuestion[], count: number = 5): ShuffledQuestion[] {
-  const games = allQuestions.filter((q) => q.itemType === 'game');
-  const mcqs = allQuestions.filter((q) => q.itemType !== 'game');
+  // Deduplicate incoming pool by question content signature
+  const seenSignatures = new Set<string>();
+  const uniquePool: QuizQuestion[] = [];
+  for (const q of allQuestions) {
+    const sig = (q.question || '').trim().toLowerCase();
+    if (!seenSignatures.has(sig)) {
+      seenSignatures.add(sig);
+      uniquePool.push(q);
+    }
+  }
+
+  const games = uniquePool.filter((q) => q.itemType === 'game');
+  const mcqs = uniquePool.filter((q) => q.itemType !== 'game');
 
   let selectedGames = shuffleArray(games).slice(0, 3);
   let selectedMcqs = shuffleArray(mcqs).slice(0, 2);

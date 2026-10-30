@@ -916,22 +916,31 @@ const BOOTH_JSON_LOADERS: Record<string, () => Promise<any>> = {
 };
 
 function pickUniqueItems<T extends { id: string }>(pool: T[], count: number, seenSet: Set<string>): { picked: T[]; wrapAround: boolean } {
-  let available = pool.filter((item) => !seenSet.has(item.id));
+  const getSig = (item: any) => (item.question ? String(item.question).trim().toLowerCase() : item.id);
+  let available = pool.filter((item) => !seenSet.has(item.id) && !seenSet.has(getSig(item)));
   let wrapAround = false;
 
-  // If bank exhausted (e.g. after 2,000 MCQs), start from front
+  // If bank exhausted (e.g. after cycling through all questions), start from front
   if (available.length < count) {
     seenSet.clear();
     available = [...pool];
     wrapAround = true;
   }
 
-  // Shuffle available pool and pick requested count
+  // Shuffle available pool and pick requested count with guaranteed distinct question content
   const shuffled = shuffle(available);
-  const picked = shuffled.slice(0, count);
+  const picked: T[] = [];
+  const pickedSigs = new Set<string>();
 
-  for (const item of picked) {
-    seenSet.add(item.id);
+  for (const item of shuffled) {
+    const sig = getSig(item);
+    if (!pickedSigs.has(sig)) {
+      pickedSigs.add(sig);
+      picked.push(item);
+      seenSet.add(item.id);
+      seenSet.add(sig);
+      if (picked.length === count) break;
+    }
   }
 
   return { picked, wrapAround };

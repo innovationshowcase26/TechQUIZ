@@ -50,7 +50,7 @@ export function ParticipantDetails({
     }
 
     if (!cleanEmail) {
-      e.email = 'Please enter your corporate email.';
+      e.email = 'Please enter your email address.';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
       e.email = 'Please enter a valid email address.';
     }
@@ -170,7 +170,7 @@ export function ParticipantDetails({
             <div className="app-pass-info">
               <span className="app-pass-label">OFFICIAL SUMMIT PASS</span>
               <h2 className="app-pass-name">{name.trim() || 'Attendee Name'}</h2>
-              <span className="app-pass-email">{email.trim() || 'corporate.email@wellsfargo.com'}</span>
+              <span className="app-pass-email">{email.trim() || 'alex.morgan@gmail.com'}</span>
             </div>
             <div className="app-pass-status-pill">
               VERIFIED
@@ -182,12 +182,12 @@ export function ParticipantDetails({
         <section className="app-card" aria-label="Registration Form">
           <div className="app-card-eyebrow-row">
             <span className="app-tag-pill">SECURITY & ACCESS</span>
-            <span className="app-category-text">ENTERPRISE PASS</span>
+            <span className="app-category-text">ATTENDEE PASS</span>
           </div>
 
           <h1 className="app-card-title">Attendee Access</h1>
           <p className="app-card-subtitle">
-            Enter your name and corporate email to initialize your Summit Challenge Passport, sync points, and enter the prize pool.
+            Enter your name and email to initialize your Summit Challenge Passport, sync points, and enter the prize pool.
           </p>
 
           <form id="app-login-form" onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '6px' }}>
@@ -219,10 +219,10 @@ export function ParticipantDetails({
               {errors.name && <span className="app-field-error-text">{errors.name}</span>}
             </div>
 
-            {/* Enterprise Email Field */}
+            {/* Email Address Field */}
             <div className="app-field-group">
               <label htmlFor="reg-email" className="app-field-label">
-                Corporate Email <span style={{ color: 'var(--app-danger)' }}>*</span>
+                Email Address <span style={{ color: 'var(--app-danger)' }}>*</span>
               </label>
               <div className="app-input-wrap">
                 <svg className="app-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -233,7 +233,7 @@ export function ParticipantDetails({
                   id="reg-email"
                   type="email"
                   className={`app-text-input ${errors.email ? 'app-text-input--error' : ''}`}
-                  placeholder="e.g. alex.morgan@wellsfargo.com"
+                  placeholder="e.g. alex.morgan@gmail.com"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);

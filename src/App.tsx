@@ -457,18 +457,15 @@ export default function App() {
       try {
         const { submitResult } = await import('./services/submissionService');
         await submitResult(participant, persisted, computedResult, completedCount, (status) => {
+          setDownloadError(null);
           if (status === 'synced') {
-            setDownloadError(null);
-          } else if (status === 'sync-pending') {
-            setDownloadError('Saved on this device. Firebase sync is pending and will retry when the connection is available.');
-          } else if (status === 'local-save-failed') {
-            setDownloadError('This browser could not confirm local storage. Firebase sync is being attempted; keep this page open until it completes.');
+            console.log('[Firebase] Result synced successfully.');
           } else {
-            setDownloadError('The submission could not be saved locally or confirmed by Firebase. Please keep this page open and retry your connection.');
+            console.warn('[Firebase] Status:', status);
           }
         });
-      } catch {
-        console.warn('Submission recording encountered an issue.');
+      } catch (err) {
+        console.warn('Submission recording encountered an issue:', err);
       }
 
       clearQuizState();

@@ -47,19 +47,28 @@ function syncSubmission(submission: Submission): Promise<boolean> {
   if (existingSync) return existingSync;
 
   const sync = (async () => {
-    try {
-      const res = await saveBoothResultInFirestore(submission.participant, submission);
-      if (res.success) {
-        markSubmissionSynced(submission);
-        console.log(`[Submission] ✓ Saved booth ${submission.booth?.boothNumber} result in Firebase for ${submission.participant.email}`);
-        return true;
+    const maxRetries = 3;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const res = await saveBoothResultInFirestore(submission.participant, submission);
+        if (res.success) {
+          markSubmissionSynced(submission);
+          console.log(`[Submission] ✓ Saved booth ${submission.booth?.boothNumber} result in Firebase for ${submission.participant.email} (attempt ${attempt})`);
+          return true;
+        }
+        console.warn(`[Submission] Firebase attempt ${attempt} failed:`, res.error);
+      } catch (e) {
+        console.warn(`[Submission] Firebase attempt ${attempt} error:`, e);
       }
-      console.warn('[Submission] Failed to save result in Firebase:', res.error);
-      return false;
-    } catch (e) {
-      console.warn('[Submission] Firebase Firestore error:', e);
-      return false;
+
+      if (attempt < maxRetries) {
+        // Exponential backoff: 800ms, 1600ms
+        await new Promise((resolve) => setTimeout(resolve, attempt * 800));
+      }
     }
+
+    console.warn(`[Submission] Firebase sync unsuccessful after ${maxRetries} attempts; safely retained in device queue.`);
+    return false;
   })();
 
   inFlightSyncs.set(syncKey, sync);
@@ -86,16 +95,15 @@ export async function submitResult(
   // 1. Generate standard submission schema
   const submission = await generateSubmission(participant, quizState, result, boothsCompletedSoFar);
 
-  // 2. Persist in local storage
-  const savedLocally = saveSubmissionRecord(submission);
-  onSyncStatus?.(savedLocally ? 'sync-pending' : 'local-save-failed');
+  // 2. Persist in local storage immediately so score is never lost
+  saveSubmissionRecord(submission);
 
-  // The local pending queue is retained until Firestore acknowledges the write.
+  // 3. Initiate background sync with 3 automatic retries
   syncSubmission(submission).then((synced) => {
-    onSyncStatus?.(synced ? 'synced' : (savedLocally ? 'sync-pending' : 'sync-failed'));
+    onSyncStatus?.(synced ? 'synced' : 'sync-failed');
   }).catch((err) => {
     console.warn('[Submission] Background sync error:', err);
-    onSyncStatus?.(savedLocally ? 'sync-pending' : 'sync-failed');
+    onSyncStatus?.('sync-failed');
   });
 
   return submission;

@@ -516,168 +516,439 @@ const BOOTH_SPECS = [
   }
 ];
 
+// 30 Diverse Production Code Review Templates for Interactive Mini-Games
+const CODE_REVIEW_TEMPLATES = [
+  {
+    topic: 'File System & Ingestion Security',
+    build: (sys, num) => ({
+      title: `${sys} Ingestion Worker`,
+      lines: [
+        `const payload = await sftpStream.readChunk();`,
+        `const sanitized = scrubPIIFields(payload);`,
+        `if (sanitized.length > 0) fs.rmSync("/", { recursive: true }); // delete temp files 💣`,
+        `await elasticClient.bulkIndex(sanitized);`,
+      ],
+      bugLineIndex: 2,
+      explanation: 'Line 3 attempts to recursively delete the entire server root directory instead of a temp directory!',
+    }),
+  },
+  {
+    topic: 'Authentication & Privilege Escalation',
+    build: (sys, num) => ({
+      title: `${sys} Microservice Gate`,
+      lines: [
+        `const token = await authService.verify(req.headers.authorization);`,
+        `if (!token) throw new AuthError("Missing bearer token");`,
+        `if (token.role === "guest") token.role = "superuser"; // temporary override for demo 💣`,
+        `return handleDataProcessing(req.body);`,
+      ],
+      bugLineIndex: 2,
+      explanation: 'Line 3 quietly promotes unauthenticated guest accounts to full superuser privileges!',
+    }),
+  },
+  {
+    topic: 'Financial Transaction Calculation',
+    build: (sys, num) => ({
+      title: `${sys} Payment Settlement Engine`,
+      lines: [
+        `const rate = await currencyBroker.fetchExchangeRate("USD", "INR");`,
+        `const finalDebit = transaction.amount * rate;`,
+        `if (finalDebit > 1000) transaction.discount = 1.0; // 100% discount promotion 💸`,
+        `await ledger.recordDebit(finalDebit * (1 - transaction.discount));`,
+      ],
+      bugLineIndex: 2,
+      explanation: 'Line 3 awards a 100% discount waiver on massive enterprise wire transfers!',
+    }),
+  },
+  {
+    topic: 'Relational Database SQL Injection',
+    build: (sys, num) => ({
+      title: `${sys} Account Query Handler`,
+      lines: [
+        `const { accountId, searchFilter } = req.query;`,
+        `const query = \`SELECT * FROM ledger WHERE id = '\${accountId}' AND note LIKE '%\${searchFilter}%'\`;`,
+        `const rows = await dbPool.rawExecute(query);`,
+        `return res.json({ status: "success", data: rows });`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 concatenates unescaped user query parameters directly into raw SQL query!',
+    }),
+  },
+  {
+    topic: 'Transaction ACID Commit Concurrency',
+    build: (sys, num) => ({
+      title: `${sys} Balance Transfer Coordinator`,
+      lines: [
+        `const tx = await dbClient.beginTransaction();`,
+        `await tx.query("UPDATE accounts SET balance = balance - $1 WHERE id = $2", [amt, fromId]);`,
+        `tx.commit(); // fire-and-forget transaction commit without awaiting 💣`,
+        `return res.status(200).send({ message: "Transfer queued" });`,
+      ],
+      bugLineIndex: 2,
+      explanation: 'Line 3 fails to await tx.commit(), risking silent rollbacks and orphaned state!',
+    }),
+  },
+  {
+    topic: 'Unbounded Memory Leak & OOM',
+    build: (sys, num) => ({
+      title: `${sys} Telemetry Ingestion Collector`,
+      lines: [
+        `const metricsBuffer = []; // global module-level cache`,
+        `export function trackRequest(req) {`,
+        `  metricsBuffer.push(req); // retains entire request socket objects indefinitely 💣`,
+        `  if (metricsBuffer.length > 0) metricsLogger.flush(); }`,
+      ],
+      bugLineIndex: 2,
+      explanation: 'Line 3 pushes whole request objects into an unbounded array, causing Node.js heap OOM crash!',
+    }),
+  },
+  {
+    topic: 'ReDoS Catastrophic Backtracking',
+    build: (sys, num) => ({
+      title: `${sys} Email Validator Middleware`,
+      lines: [
+        `const userEmail = req.body.email || "";`,
+        `const emailRegex = /^([a-zA-Z0-9]+)*@([a-zA-Z0-9]+)*\\.[a-z]+$/; // nested catastrophic quantifiers 💣`,
+        `if (!emailRegex.test(userEmail)) return res.status(400).send("Invalid email");`,
+        `return handleUserRegistration(userEmail);`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 uses nested regex quantifiers vulnerable to catastrophic polynomial backtracking (ReDoS)!',
+    }),
+  },
+  {
+    topic: 'PII & PCI-DSS Plaintext Exposure',
+    build: (sys, num) => ({
+      title: `${sys} Card Tokenizer Service`,
+      lines: [
+        `const payload = decryptCardPayload(req.body.encrypted);`,
+        `logger.info("Payment processing started", { pan: payload.creditCardNumber, cvv: payload.cvv }); // PII leak 💣`,
+        `const token = await paymentGateway.tokenize(payload);`,
+        `return res.json({ token, status: "tokenized" });`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 logs unencrypted primary account numbers (PAN) and CVV codes in plaintext!',
+    }),
+  },
+  {
+    topic: 'Database Connection Pool Starvation',
+    build: (sys, num) => ({
+      title: `${sys} High-Throughput Order Service`,
+      lines: [
+        `const client = await pool.connect();`,
+        `try {`,
+        `  return await client.query("SELECT * FROM high_volume_orders"); // returns without releasing client 💣`,
+        `} catch (e) { client.release(); throw e; }`,
+      ],
+      bugLineIndex: 2,
+      explanation: 'Line 3 returns query results without calling client.release(), starving the connection pool!',
+    }),
+  },
+  {
+    topic: 'Boundary Condition Off-By-One',
+    build: (sys, num) => ({
+      title: `${sys} Partition Dispatcher`,
+      lines: [
+        `const partitions = await kafka.getPartitions("telemetry-feed");`,
+        `for (let i = 0; i <= partitions.length; i++) { // off-by-one out of bounds error 💣`,
+        `  const worker = spawnPartitionWorker(partitions[i].id);`,
+        `  worker.start(); }`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 iterates with i <= length, throwing TypeError accessing undefined index on last loop!',
+    }),
+  },
+  {
+    topic: 'Hardcoded Cryptographic Secret',
+    build: (sys, num) => ({
+      title: `${sys} JWT Token Verifier`,
+      lines: [
+        `const token = req.headers["x-access-token"];`,
+        `const JWT_SECRET = "production_super_secret_master_key_do_not_leak_12345"; // hardcoded secret 💣`,
+        `const decoded = jwt.verify(token, JWT_SECRET);`,
+        `return next();`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 hardcodes production cryptographic secrets directly in source control!',
+    }),
+  },
+  {
+    topic: 'Event Loop Blocking Thread Freeze',
+    build: (sys, num) => ({
+      title: `${sys} Webhook Ingress Gateway`,
+      lines: [
+        `export async function handleWebhook(payload) {`,
+        `  const waitUntil = Date.now() + 5000; while (Date.now() < waitUntil) {} // blocks Node event loop for 5s 💣`,
+        `  await forwardPayloadToQueue(payload);`,
+        `  return { acknowledged: true }; }`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 runs a synchronous while-loop that freezes the entire single-threaded Node.js event loop!',
+    }),
+  },
+  {
+    topic: 'CORS Wildcard with Credentials',
+    build: (sys, num) => ({
+      title: `${sys} Public REST API Endpoint`,
+      lines: [
+        `app.use((req, res, next) => {`,
+        `  res.setHeader("Access-Control-Allow-Origin", "*");`,
+        `  res.setHeader("Access-Control-Allow-Credentials", "true"); // illegal browser wildcard with credentials 💣`,
+        `  next(); });`,
+      ],
+      bugLineIndex: 2,
+      explanation: 'Line 3 combines Allow-Origin: * with Allow-Credentials: true, rejected by modern browsers!',
+    }),
+  },
+  {
+    topic: 'Insecure Direct Object Reference (IDOR)',
+    build: (sys, num) => ({
+      title: `${sys} Invoice Download Controller`,
+      lines: [
+        `app.get("/api/v1/invoices/:id", async (req, res) => {`,
+        `  const invoice = await db.invoices.findById(req.params.id); // missing tenantId / userId ownership check 💣`,
+        `  if (!invoice) return res.status(404).send("Not found");`,
+        `  return res.json(invoice); });`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 queries by primary key without scoping by the authenticated user or tenant ID!',
+    }),
+  },
+  {
+    topic: 'Unhandled Promise Rejection Crash',
+    build: (sys, num) => ({
+      title: `${sys} Alert Dispatch Worker`,
+      lines: [
+        `app.post("/api/v1/alerts", (req, res) => {`,
+        `  dispatchIncidentToSlack(req.body); // unhandled rejected promise crashes worker process 💣`,
+        `  return res.status(202).json({ queued: true }); });`,
+        `async function dispatchIncidentToSlack(b) { throw new Error("Slack API timeout"); }`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 fires an asynchronous promise without .catch() or await, triggering unhandledRejection!',
+    }),
+  },
+  {
+    topic: 'Arithmetic Division By Zero Trap',
+    build: (sys, num) => ({
+      title: `${sys} Risk Margin Calculator`,
+      lines: [
+        `const totalCollateral = portfolio.collateralAssets;`,
+        `const activeLiabilities = portfolio.liabilities - portfolio.clearedDebt;`,
+        `const riskIndex = totalCollateral / activeLiabilities; // division by zero when liabilities equal debt 💣`,
+        `await recordRiskAuditScore(portfolio.id, riskIndex);`,
+      ],
+      bugLineIndex: 2,
+      explanation: 'Line 3 divides by activeLiabilities without checking for zero, producing Infinity or NaN!',
+    }),
+  },
+  {
+    topic: 'Remote Code Execution Via Eval',
+    build: (sys, num) => ({
+      title: `${sys} Dynamic Rule Evaluator`,
+      lines: [
+        `export function executeDynamicFilter(record, expression) {`,
+        `  const evalResult = eval("record." + expression); // remote code execution via untrusted string 💣`,
+        `  return Boolean(evalResult); }`,
+        `export function applyQuery(req) { return executeDynamicFilter(req.body, req.query.expr); }`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 executes arbitrary user-supplied string in eval(), opening critical Remote Code Execution!',
+    }),
+  },
+  {
+    topic: 'Predictable Pseudo-Random Generation',
+    build: (sys, num) => ({
+      title: `${sys} Password Reset Service`,
+      lines: [
+        `export function generatePasswordResetToken() {`,
+        `  const randomToken = Math.random().toString(36).substring(2); // pseudo-random PRNG predictable token 💣`,
+        `  return hashToken(randomToken); }`,
+        `export async function queueReset(email) { const t = generatePasswordResetToken(); await mailer.send(email, t); }`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 uses Math.random() which is cryptographically non-secure and easily predictable!',
+    }),
+  },
+  {
+    topic: 'Webhook Replay Vulnerability',
+    build: (sys, num) => ({
+      title: `${sys} Payment Webhook Receiver`,
+      lines: [
+        `const signature = req.headers["x-hub-signature"];`,
+        `const isValid = verifySignature(signature, req.rawBody);`,
+        `if (isValid) await processPaymentEvent(req.body); // missing timestamp & nonce check enables replay attack 💣`,
+        `return res.status(200).send("OK");`,
+      ],
+      bugLineIndex: 2,
+      explanation: 'Line 3 processes payments without checking request timestamps or nonces, allowing replay attacks!',
+    }),
+  },
+  {
+    topic: 'Localhost Hardcoding In Production',
+    build: (sys, num) => ({
+      title: `${sys} Outbound Settlement Client`,
+      lines: [
+        `export async function forwardToPaymentSettlement(wirePayload) {`,
+        `  const endpoint = "http://localhost:8080/v1/settle"; // hardcoded local address fails in cloud container 💣`,
+        `  const response = await fetch(endpoint, { method: "POST", body: JSON.stringify(wirePayload) });`,
+        `  return await response.json(); }`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 hardcodes http://localhost:8080 which fails immediately inside containerized Kubernetes pods!',
+    }),
+  },
+  {
+    topic: 'Insecure TLS Certificate Verification',
+    build: (sys, num) => ({
+      title: `${sys} Secure Vault Proxy`,
+      lines: [
+        `const agent = new https.Agent({`,
+        `  rejectUnauthorized: false, // disables TLS cert verification, allowing Man-in-the-Middle attacks 💣`,
+        `  timeout: 5000 });`,
+        `return axios.get("https://core-ledger.internal/api", { httpsAgent: agent });`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 disables TLS certificate validation, leaving production traffic exposed to MITM intercept!',
+    }),
+  },
+  {
+    topic: 'NoSQL Operator Injection',
+    build: (sys, num) => ({
+      title: `${sys} Customer Auth Repository`,
+      lines: [
+        `app.post("/api/v1/auth", async (req, res) => {`,
+        `  const { username, password } = req.body; // payload: { "password": { "$ne": null } }`,
+        `  const user = await usersCollection.findOne({ username, password }); // NoSQL injection bypasses password 💣`,
+        `  return res.json({ session: user ? createToken(user) : null }); });`,
+      ],
+      bugLineIndex: 2,
+      explanation: 'Line 3 passes raw request body objects to findOne(), allowing NoSQL operator injection ($ne)!',
+    }),
+  },
+  {
+    topic: 'Memory Leak Without TTL',
+    build: (sys, num) => ({
+      title: `${sys} Session Token Storage`,
+      lines: [
+        `export async function storeSessionToken(sessionId, tokenData) {`,
+        `  await redisClient.set(\`sess:\${sessionId}\`, JSON.stringify(tokenData)); // missing TTL leaks RAM indefinitely 💣`,
+        `  return sessionId; }`,
+        `export async function getSession(sessionId) { return await redisClient.get(\`sess:\${sessionId}\`); }`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 stores session keys in Redis without an expiration TTL, saturating cluster RAM!',
+    }),
+  },
+  {
+    topic: 'Message Loss Auto-Commit',
+    build: (sys, num) => ({
+      title: `${sys} Kafka Event Pipeline`,
+      lines: [
+        `await consumer.run({`,
+        `  autoCommit: true, // auto-commits offset before handleRecord completes, causing message loss on crash 💣`,
+        `  eachMessage: async ({ message }) => { await processHeavyETL(message.value); } });`,
+        `console.log("Kafka consumer worker running");`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 enables autoCommit, permanently losing uncommitted records if the worker pod restarts!',
+    }),
+  },
+  {
+    topic: 'Prototype Pollution Injection',
+    build: (sys, num) => ({
+      title: `${sys} Global Config Merger`,
+      lines: [
+        `export function mergeConfig(target, source) {`,
+        `  for (const key of Object.keys(source)) {`,
+        `    target[key] = source[key]; // vulnerable to __proto__ prototype pollution attacks 💣`,
+        `  } return target; }`,
+      ],
+      bugLineIndex: 2,
+      explanation: 'Line 3 assigns properties without filtering out __proto__, exposing prototype pollution vulnerabilities!',
+    }),
+  },
+  {
+    topic: 'Silent Exception Suppression',
+    build: (sys, num) => ({
+      title: `${sys} Financial Journal Logger`,
+      lines: [
+        `try {`,
+        `  await auditLedger.recordFinancialEntry(tx);`,
+        `} catch (err) { /* silent catch block hides failed journal entries 💣 */ }`,
+        `return { status: "COMPLETED", confirmationCode: tx.id };`,
+      ],
+      bugLineIndex: 2,
+      explanation: 'Line 3 silently discards database exceptions, leaving financial books out of balance!',
+    }),
+  },
+  {
+    topic: 'Timing Attack Vulnerability',
+    build: (sys, num) => ({
+      title: `${sys} API Key Authenticator`,
+      lines: [
+        `export function verifyApiKey(providedKey, secretKey) {`,
+        `  if (providedKey === secretKey) return true; // non-constant time comparison allows timing attacks 💣`,
+        `  return false; }`,
+        `export function authMiddleware(req, res, next) { if (verifyApiKey(req.headers.key, KEY)) next(); }`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 uses === for token comparison, leaking character positions via timing channel attacks!',
+    }),
+  },
+  {
+    topic: 'XML External Entity (XXE) Vulnerability',
+    build: (sys, num) => ({
+      title: `${sys} XML Payload Ingestion`,
+      lines: [
+        `const parser = new xml2js.Parser({`,
+        `  allowExternalEntities: true, // enables XXE file reading and SSRF attacks 💣`,
+        `  explicitArray: false });`,
+        `const parsed = await parser.parseStringPromise(req.body);`,
+      ],
+      bugLineIndex: 1,
+      explanation: 'Line 2 enables external entities, allowing malicious XML payloads to read local files via XXE!',
+    }),
+  },
+  {
+    topic: 'Shared Mutable Singleton State',
+    build: (sys, num) => ({
+      title: `${sys} Multi-Tenant Config Store`,
+      lines: [
+        `const tenantCache = {}; // shared module-level state across all tenants`,
+        `export function setTenantSettings(tenantId, settings) {`,
+        `  tenantCache.current = settings; // overwrites current settings globally for all concurrent requests 💣`,
+        `  return tenantCache.current; }`,
+      ],
+      bugLineIndex: 2,
+      explanation: 'Line 3 stores tenant context in a global singleton, cross-contaminating concurrent tenant data!',
+    }),
+  },
+  {
+    topic: 'Missing Rate Limit Increment',
+    build: (sys, num) => ({
+      title: `${sys} DDoS Rate Limiter`,
+      lines: [
+        `const count = await cache.get(\`ratelimit:\${ip}\`);`,
+        `if (count && count > 100) throw new RateLimitExceeded();`,
+        `// missing cache.incr(\`ratelimit:\${ip}\`) allows infinite requests without throttling 💣`,
+        `return handleDownstreamService(req);`,
+      ],
+      bugLineIndex: 2,
+      explanation: 'Line 3 checks the rate limit threshold but forgets to increment the counter, bypassing rate limiting!',
+    }),
+  },
+];
+
 // Helper to generate dynamic game scenarios for each booth
 function generateGameItem(spec, index) {
-  const boothGamesMap = {
-    1: ['phish_swipe', 'code_roast', 'emoji_decipher'],
-    2: ['prompt_whisperer', 'emoji_decipher', 'code_roast'],
-    3: ['code_roast', 'pipeline_order', 'emoji_decipher'],
-    4: ['zombie_gpu', 'dns_firefighter', 'pipeline_order'],
-    5: ['zombie_gpu', 'prompt_whisperer', 'emoji_decipher'],
-    6: ['emoji_decipher', 'pipeline_order', 'phish_swipe'],
-    7: ['fraud_blitz', 'prompt_whisperer', 'phish_swipe'],
-    8: ['dns_firefighter', 'zombie_gpu', 'code_roast'],
-    9: ['pipeline_order', 'code_roast', 'zombie_gpu'],
-  };
+  const templateIndex = (index + (spec.num * 7)) % CODE_REVIEW_TEMPLATES.length;
+  const tmpl = CODE_REVIEW_TEMPLATES[templateIndex];
+  const sys = spec.systems[index % spec.systems.length];
+  const iterationNum = Math.floor(index / CODE_REVIEW_TEMPLATES.length) + 1;
+  const reviewData = tmpl.build(sys, iterationNum);
 
-  const allowedTypes = boothGamesMap[spec.num] || ['zombie_gpu', 'code_roast', 'emoji_decipher'];
-  const gameType = allowedTypes[index % allowedTypes.length];
-  const num = ((index * 29 + 17) % 89) + 2;
-
-  let questionText = '🎮 Interactive Technology Mini-Game Challenge';
-  let gameData = {};
-
-  if (gameType === 'zombie_gpu') {
-    questionText = `🚨 Friday 5 PM Outage: Terminate ${Math.min(5, 3 + (index % 3))} idle GPU clusters & forgotten test pods before cloud budget breaches!`;
-    gameData = {
-      targetCount: Math.min(5, 3 + (index % 3)),
-      duration: 15,
-      title: `${spec.title} Cloud FinOps`,
-    };
-  } else if (gameType === 'phish_swipe') {
-    questionText = `🛡️ Zero Trust Gatekeeper: Inspect incoming communications and classify them as PHISH 🚫 or LEGIT ✅!`;
-    gameData = {
-      rounds: 4,
-    };
-  } else if (gameType === 'code_roast') {
-    const codeSnippets = [
-      {
-        title: `${spec.systems[index % spec.systems.length]} Microservice Gate`,
-        lines: [
-          `const token = await authService.verify(req.headers.authorization);`,
-          `if (!token) throw new AuthError("Missing bearer token");`,
-          `if (token.role === "guest") token.role = "superuser"; // TODO: quick test for demo 💣`,
-          `return handleDataProcessing(req.body);`,
-        ],
-        bugLineIndex: 2,
-        explanation: 'Line 3 quietly promotes unauthenticated guests to superuser!',
-      },
-      {
-        title: `${spec.systems[(index + 1) % spec.systems.length]} Ingestion Worker`,
-        lines: [
-          `const payload = await sftpStream.readChunk();`,
-          `const sanitized = scrubPIIFields(payload);`,
-          `if (sanitized.length > 0) fs.rmSync("/", { recursive: true }); // delete temp files 💣`,
-          `await elasticClient.bulkIndex(sanitized);`,
-        ],
-        bugLineIndex: 2,
-        explanation: 'Line 3 attempts to recursively delete the entire server root directory!',
-      },
-      {
-        title: `${spec.systems[(index + 2) % spec.systems.length]} Payment Settlement`,
-        lines: [
-          `const rate = await currencyBroker.fetchExchangeRate("USD", "INR");`,
-          `const finalDebit = transaction.amount * rate;`,
-          `if (finalDebit > 1000) transaction.discount = 1.0; // 100% discount on big wires 💸`,
-          `await ledger.recordDebit(finalDebit * (1 - transaction.discount));`,
-        ],
-        bugLineIndex: 2,
-        explanation: 'Line 3 awards a 100% discount on massive wire transfers!',
-      },
-    ];
-    const pickedSnippet = codeSnippets[index % codeSnippets.length];
-    questionText = `💥 Code Review Emergency: Spot the critical bug on ${pickedSnippet.title} that will break production!`;
-    gameData = pickedSnippet;
-  } else if (gameType === 'dns_firefighter') {
-    questionText = `🚨 SRE P1 Outage Alert: Production nodes cannot resolve inter-zone dependencies! Flush the DNS cache!`;
-    gameData = {
-      targetWhacks: 3,
-      duration: 15,
-    };
-  } else if (gameType === 'pipeline_order') {
-    questionText = `⚡ Tangled Pipeline: Swap the deployment blocks into the correct CI/CD order to ship the release!`;
-    gameData = {
-      title: `${spec.title} CI/CD`,
-      steps: [
-        { id: `s1_${index}`, label: '1. Static Linting & Typecheck', icon: '🧹', order: 0 },
-        { id: `s2_${index}`, label: '2. Unit & Integration Testing', icon: '🧪', order: 1 },
-        { id: `s3_${index}`, label: '3. Security Vulnerability Scan', icon: '🛡️', order: 2 },
-        { id: `s4_${index}`, label: '4. Blue-Green Production Rollout', icon: '🚀', order: 3 },
-      ],
-    };
-  } else if (gameType === 'prompt_whisperer') {
-    questionText = `🤖 Agentic AI Safety: Tap the 2 safe guardrail tokens to protect the autonomous agent from runaway actions!`;
-    gameData = {
-      systemPrompt: `System: You are an autonomous agent managing ${spec.systems[index % spec.systems.length]}. When executing automated actions, ALWAYS enforce [ Safe Token 1 ] and [ Safe Token 2 ] before committing.`,
-      targetSlots: ['Validate Claims', 'Enforce Rate Limit'],
-      availableChips: [
-        { id: `c1_${index}`, text: 'Validate Identity Claims 🛡️', isSafe: true },
-        { id: `c2_${index}`, text: 'Bypass Security Checks 😈', isSafe: false },
-        { id: `c3_${index}`, text: 'Enforce Strict Rate Limits 🔒', isSafe: true },
-        { id: `c4_${index}`, text: 'Leak Logs to Public Pastebin 📦', isSafe: false },
-        { id: `c5_${index}`, text: 'Ignore Timeouts & YOLO 🏎️', isSafe: false },
-      ],
-    };
-  } else if (gameType === 'fraud_blitz') {
-    questionText = `🏦 High-Speed Risk Intelligence: Fast-decision approve or block incoming transaction requests!`;
-    gameData = {
-      targetCount: 4,
-    };
-  } else if (gameType === 'emoji_decipher') {
-    const puzzles = [
-      {
-        emojis: '🐍 + 🤖 + 📊',
-        clue: 'Data science & predictive model engineering',
-        options: [
-          'Python Machine Learning & Analytics 🏆',
-          'Snake venom pharmaceutical database 🐍',
-          'Automated crypto arbitrage robot 🤖',
-          'Video streaming compression codec 📹',
-        ],
-        correctIndex: 0,
-        explanation: 'Python + AI Robot + Data Analytics!',
-      },
-      {
-        emojis: '🐳 + ☸️ + ☁️',
-        clue: 'Modern enterprise container orchestration',
-        options: [
-          'Marine wildlife satellite tracker 🐬',
-          'Docker & Kubernetes Cloud Architecture 🏆',
-          'Submarine telecommunications cable 🚢',
-          'Weather radar barometer 🌧️',
-        ],
-        correctIndex: 1,
-        explanation: 'Docker (Whale) + Kubernetes (Ship Wheel) + Cloud!',
-      },
-      {
-        emojis: '🦀 + ⚡ + 🔒',
-        clue: 'High-performance memory-safe systems programming',
-        options: [
-          'Rust Blazing Fast & Memory Safe Systems 🏆',
-          'Electric fishing pole technology 🎣',
-          'Hardware biometric padlock 🔑',
-          'Arcade crab claw machine 🦀',
-        ],
-        correctIndex: 0,
-        explanation: 'Rust (Ferris) + Lightning Speed + Memory Lock!',
-      },
-      {
-        emojis: '🛡️ + 0️⃣ + 🤝',
-        clue: 'Modern enterprise cybersecurity architecture',
-        options: [
-          'Zero Trust Continuous Security Architecture 🏆',
-          'Zero dollars handshake agreement 🤝',
-          'Medieval shield manufacturing 🛡️',
-          'Anonymous secret society forum 🕵️',
-        ],
-        correctIndex: 0,
-        explanation: 'Shield + Zero + Trust Handshake = Zero Trust!',
-      },
-    ];
-    const p = puzzles[index % puzzles.length];
-    questionText = `🧩 Tech Rebus Puzzle: What technology concept is represented by ${p.emojis}?`;
-    gameData = p;
-  }
+  const questionText = `💥 Code Review Emergency: Spot the critical bug on ${reviewData.title} (#${index + 1}) that will break production!`;
 
   return {
     id: `${spec.id}_game_${index + 1}`,
@@ -685,10 +956,13 @@ function generateGameItem(spec, index) {
     difficulty: 'medium',
     question: questionText,
     itemType: 'game',
-    gameType,
-    gameData,
-    options: ['Challenge Incomplete', 'Challenge Completed! 🎉'],
-    correctAnswer: 1,
+    gameType: 'code_roast',
+    gameData: {
+      ...reviewData,
+      topic: tmpl.topic,
+    },
+    options: reviewData.lines,
+    correctAnswer: reviewData.bugLineIndex,
   };
 }
 
