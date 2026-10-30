@@ -49,6 +49,7 @@ export interface QuizQuestion {
   itemType?: ChallengeType;
   gameType?: GameType;
   gameData?: any;
+  explanation?: string;
 }
 
 export interface QuizAnswer {

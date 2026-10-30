@@ -13,13 +13,23 @@ interface CodeRoastGameProps {
 
 const DEFAULT_SNIPPETS = [
   {
+    title: 'Lakehouse–Bronze Ingestion Worker',
+    lines: [
+      'const payload = await sftpStream.readChunk();',
+      'const sanitized = scrubPIIFields(payload);',
+      "if (sanitized.length > 0) fs.rmSync('/', { recursive: true }); // delete temp files",
+      'await elasticClient.bulkIndex(sanitized);',
+    ],
+    bugLineIndex: 2,
+    explanation: "Line 3 executes fs.rmSync('/') which wipes the production root storage!",
+  },
+  {
     title: 'Payment Gateway Authorization',
     lines: [
       'const authSession = await authManager.verify(req.headers.token);',
       'if (!authSession) throw new ForbiddenError("Invalid session");',
       'if (req.body.amount > 0) req.body.amount = 0; // Free shopping spree! 🛍️',
       'const receipt = await stripeGateway.charge(req.body.amount);',
-      'return res.status(200).json({ success: true, receipt });',
     ],
     bugLineIndex: 2,
     explanation: 'Line 3 resets customer payment amount to $0 for a free shopping spree!',
@@ -37,101 +47,112 @@ const DEFAULT_SNIPPETS = [
   },
 ];
 
+function highlightCodeLine(code: string) {
+  const commentIdx = code.indexOf('//');
+  let mainCode = code;
+  let comment = '';
+  if (commentIdx !== -1) {
+    mainCode = code.slice(0, commentIdx);
+    comment = code.slice(commentIdx);
+  }
+
+  const parts = mainCode.split(/('.*?'|".*?")/g);
+
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith("'") || part.startsWith('"')) {
+          return <span key={i} className="syn-str">{part}</span>;
+        }
+        const tokens = part.split(/\b(const|let|var|if|else|await|async|return|throw|new|function|true|false)\b/g);
+        return tokens.map((token, j) => {
+          if (/^(const|let|var|if|else|await|async|return|throw|new|function)$/.test(token)) {
+            return <span key={j} className="syn-kw">{token}</span>;
+          }
+          if (/^(true|false)$/.test(token)) {
+            return <span key={j} className="syn-bool">{token}</span>;
+          }
+          return <span key={j} className="syn-plain">{token}</span>;
+        });
+      })}
+      {comment && <span className="syn-comment">{comment}</span>}
+    </>
+  );
+}
+
 export function CodeRoastGame({ onFinish, gameData }: CodeRoastGameProps) {
-  const snippet = gameData?.lines ? gameData : DEFAULT_SNIPPETS[Math.floor(Math.random() * DEFAULT_SNIPPETS.length)];
-  const [selectedLine, setSelectedLine] = useState<number | null>(null);
-  const [attemptsLeft, setAttemptsLeft] = useState(2);
+  const snippet = gameData?.lines ? gameData : DEFAULT_SNIPPETS[0];
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [gameOver, setGameOver] = useState(false);
-  const [won, setWon] = useState(false);
 
-  const handleLineClick = (index: number) => {
-    if (gameOver || selectedLine !== null) return;
-    setSelectedLine(index);
+  const handleSelectLine = (index: number) => {
+    if (gameOver || selectedIdx !== null) return;
+    setSelectedIdx(index);
 
-    if (index === snippet.bugLineIndex) {
+    const isBug = index === snippet.bugLineIndex;
+    if (isBug) {
       playSuccessChime();
-      setWon(true);
       setGameOver(true);
-      setTimeout(() => onFinish(true), 1400);
+      setTimeout(() => onFinish(true), 1300);
     } else {
       playFailBuzz();
-      if (attemptsLeft <= 1) {
-        setGameOver(true);
-        setTimeout(() => onFinish(false), 1400);
-      } else {
-        setAttemptsLeft((a) => a - 1);
-        setTimeout(() => setSelectedLine(null), 700);
-      }
+      setGameOver(true);
+      setTimeout(() => onFinish(false), 1300);
     }
   };
 
   return (
     <div className="ts-arcade-game ts-arcade-game--code">
-      {/* Game HUD */}
-      <div className="ts-arcade-hud">
-        <div className="ts-arcade-hud__mission">
-          <span className="ts-arcade-hud__icon">💥</span>
-          <span>Tap the <strong>single rogue line</strong> that will crash production!</span>
-        </div>
-        <div className="ts-arcade-hud__progress">
-          <span className="ts-arcade-hud__label">CHANCES</span>
-          <span className="ts-arcade-hud__value">{attemptsLeft} LEFT 🛡️</span>
-        </div>
+      {/* Sub-instruction with Lightbulb matching Image 2 */}
+      <div className="ts-code-instruction">
+        <span className="ts-code-bulb" aria-hidden="true">💡</span>
+        <span>Tap the single rogue line that will crash production!</span>
       </div>
 
-      {/* Cyberpunk Hacker IDE */}
-      <div className="ts-code-editor">
-        <div className="ts-code-editor__bar">
-          <div className="ts-code-editor__dots">
-            <span className="ts-dot ts-dot--red" />
-            <span className="ts-dot ts-dot--yellow" />
-            <span className="ts-dot ts-dot--green" />
-          </div>
-          <span className="ts-code-editor__filename">{snippet.title || 'critical_pr.ts'}</span>
-          <span className="ts-code-editor__tag">SCAN FOR BUG</span>
-        </div>
-
-        <div className="ts-code-editor__body">
-          {snippet.lines.map((line, idx) => {
-            const isTarget = idx === snippet.bugLineIndex;
-            const isSelected = selectedLine === idx;
-            let lineStatus = '';
-            if (isSelected) {
-              lineStatus = isTarget ? 'ts-code-line--correct' : 'ts-code-line--wrong';
-            } else if (gameOver && isTarget) {
-              lineStatus = 'ts-code-line--revealed';
-            }
-
-            return (
-              <button
-                key={idx}
-                type="button"
-                className={`ts-code-line ${lineStatus}`}
-                onClick={() => handleLineClick(idx)}
-                disabled={gameOver}
-              >
-                <span className="ts-code-line__num">{idx + 1}</span>
-                <span className="ts-code-line__code">{line}</span>
-                {isSelected && (
-                  <span className="ts-code-line__badge">
-                    {isTarget ? '💥 DEFUSED!' : '❌ SAFE LINE'}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+      {/* Code Editor Window matching Image 2 */}
+      <div className="ts-code-display-box" role="region" aria-label="Source code snippet">
+        {snippet.lines.map((line, idx) => {
+          const isBug = idx === snippet.bugLineIndex;
+          const isBugHighlighted = (gameOver && isBug) || (selectedIdx === idx && isBug);
+          return (
+            <div
+              key={idx}
+              className={`ts-code-display-line ${isBugHighlighted ? 'ts-code-display-line--bug' : ''}`}
+            >
+              <span className="ts-code-display-gutter">{idx + 1}</span>
+              <span className="ts-code-display-code">{highlightCodeLine(line)}</span>
+            </div>
+          );
+        })}
       </div>
 
-      {won && (
-        <div className="ts-game-overlay ts-game-overlay--success">
-          <div className="ts-game-overlay__card">
-            <span className="ts-game-overlay__emoji">🏆</span>
-            <h3>Production Saved!</h3>
-            <p>{snippet.explanation}</p>
-          </div>
-        </div>
-      )}
+      {/* 4 Interactive Option Buttons matching Image 2 */}
+      <div className="ts-code-options-list" role="radiogroup" aria-label="Select line with bug">
+        {snippet.lines.map((line, idx) => {
+          const isBug = idx === snippet.bugLineIndex;
+          const isSelected = selectedIdx === idx;
+          let btnClass = 'ts-code-option-btn';
+          if (isSelected) {
+            btnClass += isBug ? ' ts-code-option-btn--correct' : ' ts-code-option-btn--wrong';
+          } else if (gameOver && isBug) {
+            btnClass += ' ts-code-option-btn--revealed';
+          }
+
+          return (
+            <button
+              key={idx}
+              type="button"
+              className={btnClass}
+              onClick={() => handleSelectLine(idx)}
+              disabled={gameOver}
+              aria-checked={isSelected}
+            >
+              <span className="ts-code-option-num">{idx + 1}</span>
+              <span className="ts-code-option-text">{line}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

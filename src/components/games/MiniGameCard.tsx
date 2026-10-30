@@ -8,12 +8,43 @@ import { PipelineOrderGame } from './PipelineOrderGame';
 import { PromptWhispererGame } from './PromptWhispererGame';
 import { FraudBlitzGame } from './FraudBlitzGame';
 import { EmojiDecipherGame } from './EmojiDecipherGame';
-import { SparklesIcon } from '../Icons';
 
 interface MiniGameCardProps {
   question: QuizQuestion;
   selectedIndex: number | null;
   onComplete: (success: boolean) => void;
+}
+
+function getCleanCategoryPill(category: string): { icon: string; label: string } {
+  const c = (category || '').toLowerCase();
+  if (c.includes('data') || c.includes('govern') || c.includes('security') || c.includes('lineage')) {
+    return { icon: '🗄️', label: 'DATA & SECURITY' };
+  }
+  if (c.includes('cloud') || c.includes('platform') || c.includes('modernization')) {
+    return { icon: '☁️', label: 'CLOUD & ARCHITECTURE' };
+  }
+  if (c.includes('agent') || c.includes('bank') || c.includes('identity')) {
+    return { icon: '🤖', label: 'AGENTS & DIGITAL BANKING' };
+  }
+  if (c.includes('software') || c.includes('dev') || c.includes('developer')) {
+    return { icon: '⚡', label: 'DEV PRODUCTIVITY' };
+  }
+  if (c.includes('enterprise ai') || c.includes('operations')) {
+    return { icon: '🧠', label: 'AI PLATFORM & OPS' };
+  }
+  if (c.includes('bi') || c.includes('process') || c.includes('automation')) {
+    return { icon: '📊', label: 'AI BI & AUTOMATION' };
+  }
+  if (c.includes('risk') || c.includes('teammate')) {
+    return { icon: '🛡️', label: 'RISK INTELLIGENCE' };
+  }
+  if (c.includes('sre') || c.includes('intelligent enterprise')) {
+    return { icon: '🖥️', label: 'SRE & PLATFORMS' };
+  }
+  if (c.includes('quality') || c.includes('accelerat')) {
+    return { icon: '🚀', label: 'QUALITY & AUTOMATION' };
+  }
+  return { icon: '💎', label: (category || 'TECH CHALLENGE').toUpperCase() };
 }
 
 export function MiniGameCard({ question, selectedIndex, onComplete }: MiniGameCardProps) {
@@ -49,17 +80,24 @@ export function MiniGameCard({ question, selectedIndex, onComplete }: MiniGameCa
     }
   };
 
+  const catPill = getCleanCategoryPill(question.category);
+
   return (
     <div className="ts-question-card ts-question-card--game">
-      <div className="ts-question-card__category">
-        <span className="ts-question-card__category-icon" aria-hidden="true">
-          <SparklesIcon size={16} />
-        </span>
-        <span>🎮 MINI-GAME CHALLENGE • {question.category}</span>
-        {completed !== null && (
-          <span className={`ts-game-status-badge ${completed ? 'ts-game-status-badge--won' : 'ts-game-status-badge--lost'}`}>
-            {completed ? '✓ CHALLENGE WON (+1 PTS)' : '✗ CHALLENGE FAILED (0 PTS)'}
+      <div className="ts-game-card-header">
+        <div className="ts-game-badge-group">
+          <span className="ts-game-pill ts-game-pill--challenge">
+            <span aria-hidden="true">🛡️</span> MINI-GAME CHALLENGE
           </span>
+          <span className="ts-game-pill ts-game-pill--category">
+            <span aria-hidden="true">{catPill.icon}</span> {catPill.label}
+          </span>
+        </div>
+
+        {completed !== null && (
+          <div className={`ts-game-status-pill ${completed ? 'ts-game-status-pill--won' : 'ts-game-status-pill--failed'}`}>
+            {completed ? '✓ CHALLENGE COMPLETED (+1 PTS)' : '❌ CHALLENGE FAILED (0 PTS)'}
+          </div>
         )}
       </div>
 

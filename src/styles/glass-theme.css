@@ -2358,3 +2358,459 @@ html, body {
   .ts-hero-title { font-size: clamp(34px, 10vw, 48px); }
   .ts-hero-description { font-size: 13px; }
 }
+
+/* ==========================================================================
+   IMAGE 2 EXACT TARGET DESIGN: CYBER-ARCADE SHOWCASE & CODE REVIEW
+   ========================================================================== */
+
+/* 1. Showcase Header */
+.ts-showcase-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.ts-showcase-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ts-showcase-target-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.5));
+}
+
+.ts-showcase-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.ts-showcase-title {
+  font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #FFFFFF;
+  text-transform: uppercase;
+}
+
+.ts-showcase-tagline {
+  font-size: 0.74rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #F59E0B 0%, #F97316 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 0.02em;
+}
+
+.ts-showcase-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1.5px solid #1e40af;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  box-shadow: 0 0 14px rgba(30, 64, 175, 0.3);
+}
+
+/* 2. Question Counter & Timer Bar */
+.ts-quiz-meta-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.ts-quiz-meta-qnum {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ts-quiz-meta-divider {
+  color: #38bdf8;
+  font-size: 1.15rem;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.ts-quiz-meta-timer .ts-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #09122a !important;
+  border: 1.5px solid #1e40af !important;
+  border-radius: 9999px !important;
+  padding: 5px 14px !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 0 14px rgba(30, 64, 175, 0.3) !important;
+}
+
+.ts-quiz-meta-timer .ts-timer__icon-wrap {
+  color: #38bdf8 !important;
+  display: flex;
+  align-items: center;
+  animation: none !important;
+}
+
+.ts-quiz-meta-timer .ts-timer__content {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.ts-quiz-meta-timer .ts-timer__value {
+  font-family: var(--font-sans, sans-serif) !important;
+  font-size: 0.92rem !important;
+  font-weight: 800 !important;
+  color: #FFFFFF !important;
+  text-shadow: none !important;
+}
+
+.ts-quiz-meta-timer .ts-timer__unit {
+  font-family: var(--font-sans, sans-serif) !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em;
+  color: #94A3B8 !important;
+}
+
+/* 3. Glowing Neon Card (Image 2) */
+.ts-question-card,
+.ts-question-card--game {
+  background: rgba(8, 14, 30, 0.96) !important;
+  border: 2px solid #1a56db !important;
+  box-shadow: 0 0 25px rgba(26, 86, 219, 0.4), 0 20px 50px rgba(0, 0, 0, 0.7) !important;
+  border-radius: 24px !important;
+  padding: 22px 18px !important;
+  position: relative !important;
+  color: #FFFFFF !important;
+  box-sizing: border-box !important;
+}
+
+.ts-game-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.ts-game-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ts-game-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ts-game-pill--challenge {
+  background: rgba(79, 70, 229, 0.22);
+  border: 1.5px solid #6366f1;
+  color: #e0e7ff;
+}
+
+.ts-game-pill--category {
+  background: rgba(14, 165, 233, 0.18);
+  border: 1.5px solid #0284c7;
+  color: #bae6fd;
+}
+
+.ts-game-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  margin-left: auto;
+}
+
+.ts-game-status-pill--failed {
+  color: #ef4444;
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+.ts-game-status-pill--won {
+  color: #22c55e;
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+}
+
+.ts-question-card__text {
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  color: #FFFFFF !important;
+  line-height: 1.35 !important;
+  margin: 0 0 14px 0 !important;
+  letter-spacing: -0.01em;
+}
+
+/* 4. Code Review Game (Image 2) */
+.ts-code-instruction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #a5b4fc;
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.ts-code-bulb {
+  font-size: 1.15rem;
+}
+
+.ts-code-display-box {
+  background: #060b18;
+  border: 1.5px solid #1e3a8a;
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 0.84rem;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+.ts-code-display-line {
+  display: flex;
+  align-items: baseline;
+  padding: 3px 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.ts-code-display-line--bug {
+  background: rgba(239, 68, 68, 0.22);
+  border: 1px solid #ef4444;
+}
+
+.ts-code-display-gutter {
+  color: #64748b;
+  width: 28px;
+  flex-shrink: 0;
+  user-select: none;
+  font-size: 0.8rem;
+}
+
+.ts-code-display-code {
+  flex: 1;
+  word-break: break-word;
+}
+
+.syn-kw { color: #38bdf8; font-weight: 600; }
+.syn-str { color: #f43f5e; }
+.syn-bool { color: #c084fc; font-weight: 600; }
+.syn-comment { color: #4ade80; font-style: italic; margin-left: 6px; }
+.syn-plain { color: #e2e8f0; }
+
+.ts-code-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ts-code-option-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: #0c142b;
+  border: 1.5px solid #1e40af;
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  color: #FFFFFF;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 0.84rem;
+  transition: all 0.15s ease;
+  user-select: none;
+  line-height: 1.4;
+  width: 100%;
+}
+
+.ts-code-option-btn:hover:not(:disabled) {
+  background: #111c3d;
+  border-color: #3b82f6;
+}
+
+.ts-code-option-btn:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.ts-code-option-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #1d4ed8;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+  font-family: var(--font-sans, sans-serif);
+  transition: all 0.15s ease;
+}
+
+.ts-code-option-text {
+  flex: 1;
+  word-break: break-word;
+}
+
+.ts-code-option-btn--wrong {
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.3) !important;
+}
+
+.ts-code-option-btn--wrong .ts-code-option-num {
+  background: #ef4444 !important;
+}
+
+.ts-code-option-btn--correct {
+  border-color: #22c55e !important;
+  background: rgba(34, 197, 94, 0.15) !important;
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.3) !important;
+}
+
+.ts-code-option-btn--correct .ts-code-option-num {
+  background: #22c55e !important;
+}
+
+.ts-code-option-btn--revealed {
+  border-color: #22c55e !important;
+  background: rgba(34, 197, 94, 0.12) !important;
+}
+
+.ts-code-option-btn--revealed .ts-code-option-num {
+  background: #22c55e !important;
+}
+
+/* 5. Navigation Buttons (Image 2) */
+.ts-quiz-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.ts-quiz-actions .ts-btn--secondary {
+  background: #0b1228 !important;
+  border: 1.5px solid #1e40af !important;
+  color: #FFFFFF !important;
+  border-radius: 9999px !important;
+  font-weight: 700 !important;
+  padding: 12px 28px !important;
+  font-size: 0.9rem !important;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+}
+
+.ts-quiz-actions .ts-btn--primary {
+  background: linear-gradient(90deg, #ff5e36 0%, #ff2a85 100%) !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  border-radius: 9999px !important;
+  font-weight: 800 !important;
+  padding: 12px 28px !important;
+  font-size: 0.9rem !important;
+  box-shadow: 0 4px 20px rgba(255, 42, 133, 0.45) !important;
+  letter-spacing: 0.05em;
+}
+
+/* 6. MCQ Option Styling harmonious with Image 2 */
+.ts-question-card__options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ts-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  background: #0c142b;
+  border: 1.5px solid #1e40af;
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  color: #FFFFFF;
+  font-family: var(--font-sans, sans-serif);
+  font-size: 0.92rem;
+  transition: all 0.15s ease;
+  user-select: none;
+  width: 100%;
+}
+
+.ts-option:hover {
+  background: #111c3d;
+  border-color: #3b82f6;
+}
+
+.ts-option:active {
+  transform: scale(0.985);
+}
+
+.ts-option__letter {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #1d4ed8;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+}
+
+.ts-option__text {
+  flex: 1;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+.ts-option--selected {
+  border-color: #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.16) !important;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.3) !important;
+}
+
+.ts-option--selected .ts-option__letter {
+  background: #38bdf8 !important;
+  color: #0c142b !important;
+}
+
+
