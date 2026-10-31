@@ -8,6 +8,14 @@ import { PipelineOrderGame } from './PipelineOrderGame';
 import { PromptWhispererGame } from './PromptWhispererGame';
 import { FraudBlitzGame } from './FraudBlitzGame';
 import { EmojiDecipherGame } from './EmojiDecipherGame';
+import { GameRunner } from './GameRunner';
+
+// New emoji-based game types handled by GameRunner
+const EMOJI_GAME_TYPES = new Set([
+  'memory_missing', 'grid_tap', 'odd_one', 'pair_match',
+  'sequence', 'timer_stop', 'luck_pick', 'sort_bucket',
+  'pattern_quiz', 'crowd_judge',
+]);
 
 interface MiniGameCardProps {
   question: QuizQuestion;
@@ -17,6 +25,9 @@ interface MiniGameCardProps {
 
 function getCleanCategoryPill(category: string): { icon: string; label: string } {
   const c = (category || '').toLowerCase();
+  if (c.includes('mini game') || c.includes('mini-game')) {
+    return { icon: '🎮', label: 'FUN MINI-GAME' };
+  }
   if (c.includes('data') || c.includes('govern') || c.includes('security') || c.includes('lineage')) {
     return { icon: '🗄️', label: 'DATA & SECURITY' };
   }
@@ -57,6 +68,12 @@ export function MiniGameCard({ question, selectedIndex, onComplete }: MiniGameCa
   };
 
   const renderGame = () => {
+    // Route new emoji-based fun games to the unified GameRunner
+    if (question.gameType && EMOJI_GAME_TYPES.has(question.gameType)) {
+      return <GameRunner question={question} onDone={handleGameFinish} />;
+    }
+
+    // Legacy tech games (kept for backward compatibility with existing JSON data)
     switch (question.gameType) {
       case 'zombie_gpu':
         return <ZombieGPUGame onFinish={handleGameFinish} gameData={question.gameData} />;
@@ -75,8 +92,8 @@ export function MiniGameCard({ question, selectedIndex, onComplete }: MiniGameCa
       case 'emoji_decipher':
         return <EmojiDecipherGame onFinish={handleGameFinish} gameData={question.gameData} />;
       default:
-        // Fallback to ZombieGPU if unknown gameType
-        return <ZombieGPUGame onFinish={handleGameFinish} gameData={question.gameData} />;
+        // Fallback: try GameRunner for any unknown future game type
+        return <GameRunner question={question} onDone={handleGameFinish} />;
     }
   };
 
@@ -87,7 +104,7 @@ export function MiniGameCard({ question, selectedIndex, onComplete }: MiniGameCa
       <div className="ts-game-card-header">
         <div className="ts-game-badge-group">
           <span className="ts-game-pill ts-game-pill--challenge">
-            <span aria-hidden="true">🛡️</span> MINI-GAME CHALLENGE
+            <span aria-hidden="true">🎮</span> MINI-GAME CHALLENGE
           </span>
           <span className="ts-game-pill ts-game-pill--category">
             <span aria-hidden="true">{catPill.icon}</span> {catPill.label}
@@ -109,3 +126,4 @@ export function MiniGameCard({ question, selectedIndex, onComplete }: MiniGameCa
     </div>
   );
 }
+

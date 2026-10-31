@@ -1108,3 +1108,130 @@ html, body, #root {
   display: none !important;
 }
 
+/* ==========================================================================
+   PROGRESS SPINNER & SUBMITTING OVERLAY (Hold on till Firebase saves)
+   ========================================================================== */
+@keyframes app-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes app-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+@keyframes app-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.app-spinner-icon {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #FFFFFF;
+  border-radius: 50%;
+  animation: app-spin 0.7s linear infinite;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.app-spinner-icon--large {
+  width: 42px;
+  height: 42px;
+  border: 3.5px solid rgba(37, 99, 235, 0.18);
+  border-top-color: var(--app-primary);
+}
+
+.app-btn-loading-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  line-height: 1;
+}
+
+.app-submitting-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: rgba(15, 23, 42, 0.55) !important;
+  backdrop-filter: blur(5px) !important;
+  -webkit-backdrop-filter: blur(5px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px !important;
+  z-index: 9999 !important;
+  box-sizing: border-box !important;
+  animation: app-fade-in 0.2s ease-out;
+}
+
+.app-submitting-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 320px;
+  background: #FFFFFF;
+  border-radius: 24px;
+  padding: 28px 24px;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.22);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-sizing: border-box;
+}
+
+.app-submitting-spinner-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  background: var(--app-primary-light);
+  margin-bottom: 16px;
+}
+
+.app-submitting-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--app-text-primary);
+  margin: 0 0 6px 0;
+}
+
+.app-submitting-sub {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--app-text-secondary);
+  margin: 0 0 16px 0;
+}
+
+.app-submitting-pulse-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #F1F5F9;
+  border: 1px solid var(--app-border);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--app-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.app-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--app-primary);
+  animation: app-pulse 1.2s ease-in-out infinite;
+}
+
+

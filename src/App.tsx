@@ -453,17 +453,20 @@ export default function App() {
         setShowCelebration(true);
       }
 
-      // Submit to Firebase Firestore database
+      // Submit to Firebase Firestore database - hold on until record is saved to Firebase
       try {
         const { submitResult } = await import('./services/submissionService');
-        await submitResult(participant, persisted, computedResult, completedCount, (status) => {
-          setDownloadError(null);
-          if (status === 'synced') {
-            console.log('[Firebase] Result synced successfully.');
-          } else {
-            console.warn('[Firebase] Status:', status);
-          }
-        });
+        await Promise.all([
+          submitResult(participant, persisted, computedResult, completedCount, (status) => {
+            setDownloadError(null);
+            if (status === 'synced') {
+              console.log('[Firebase] Result synced successfully.');
+            } else {
+              console.warn('[Firebase] Status:', status);
+            }
+          }),
+          new Promise((resolve) => setTimeout(resolve, 500)),
+        ]);
       } catch (err) {
         console.warn('Submission recording encountered an issue:', err);
       }

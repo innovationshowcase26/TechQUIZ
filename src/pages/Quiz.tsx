@@ -264,13 +264,39 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
           onClick={handleProceed}
           disabled={selectedIdx === null || submitting || expired}
         >
-          {isLast
-            ? submitting
-              ? 'Submitting…'
-              : 'Submit Challenge'
-            : 'Next Question →'}
+          {isLast ? (
+            submitting ? (
+              <span className="app-btn-loading-content">
+                <span className="app-spinner-icon" aria-hidden="true" />
+                <span>Saving to Firebase…</span>
+              </span>
+            ) : (
+              'Submit Challenge'
+            )
+          ) : (
+            'Next Question →'
+          )}
         </button>
       </footer>
+
+      {/* 5. Firebase Saving Progress Indicator Overlay */}
+      {submitting && (
+        <div className="app-submitting-overlay" role="status" aria-live="polite">
+          <div className="app-submitting-card">
+            <div className="app-submitting-spinner-box">
+              <span className="app-spinner-icon app-spinner-icon--large" aria-hidden="true" />
+            </div>
+            <h2 className="app-submitting-title">Recording Challenge Score</h2>
+            <p className="app-submitting-sub">
+              Saving your results to Wells Fargo Firebase Cloud…
+            </p>
+            <div className="app-submitting-pulse-badge">
+              <span className="app-pulse-dot" />
+              <span>Please hold on</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

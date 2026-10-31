@@ -940,38 +940,238 @@ const CODE_REVIEW_TEMPLATES = [
   },
 ];
 
-// Helper to generate dynamic game scenarios for each booth
-function generateGameItem(spec, index) {
-  const templateIndex = (index + (spec.num * 7)) % CODE_REVIEW_TEMPLATES.length;
-  const tmpl = CODE_REVIEW_TEMPLATES[templateIndex];
-  const sys = spec.systems[index % spec.systems.length];
-  const iterationNum = Math.floor(index / CODE_REVIEW_TEMPLATES.length) + 1;
-  const reviewData = tmpl.build(sys, iterationNum);
+// ────────────────────────────────────────────────
+// Funny Emoji Mini-Game Templates & Generator
+// ────────────────────────────────────────────────
+const POOLS = {
+  animals: ['🐶', '🐱', '🐼', '🦊', '🐸', '🐵', '🦁', '🐯', '🐨', '🐙', '🦄', '🐧', '🦉', '🦋', '🦖', '🐬', '🦥', '🦩'],
+  food:    ['🍕', '🍔', '🍟', '🍎', '🍌', '🍇', '🍩', '🌮', '🍉', '🥑', '🧁', '🍰', '🍦', '🍿', '🍣', '🍪', '🥞', '🥨'],
+  tech:    ['💻', '📱', '🔌', '🔋', '🤖', '🛰️', '💾', '🖱️', '⌨️', '📡', '🎮', '🕹️', '🕶️', '🚀', '📟', '👾', '🎧', '🔬'],
+  faces:   ['😀', '😎', '🤓', '😴', '🤯', '🥳', '😡', '🤖', '👻', '😺', '🤡', '🥸', '🤠', '🕵️', '👽', '🤪', '🤫', '🤩'],
+  objects: ['⚽', '🎸', '🚗', '⏰', '🎈', '🔑', '📦', '🎁', '🧲', '🔔', '💎', '🎯', '👑', '🏆', '🪄', '📢', '🧰', '💎'],
+  nature:  ['🌸', '🌻', '🌵', '🍀', '🌈', '⭐', '🌙', '☀️', '🌊', '🔥', '❄️', '🍂', '⚡', '🌋', '🍄', '🪐', '🌴', '🍁'],
+  magic:   ['🧙‍♂️', '🪄', '🔮', '✨', '🗝️', '📜', '🏰', '🐉', '🕯️', '🧪', '🧿', '🦄', '🧞', '🪙', '🦉', '🪞'],
+  sports:  ['⚽', '🏀', '🎾', '🏈', '🎱', '🏓', '🥊', '🏹', '🛹', '⛷️', '🏄‍♂️', '🏋️', '🚴', '🏆', '🏅', '⛳'],
+};
+const POOL_KEYS = Object.keys(POOLS);
 
-  const questionText = `💥 Code Review Emergency: Spot the critical bug on ${reviewData.title} (#${index + 1}) that will break production!`;
+const BOOTH_SKIN = {
+  'booth-1': { pool: 'tech',    win: ['Zero Trust? Zero mistakes! 🛡️', 'Firewall champion! 🔥', 'Data guardian supreme! 🗄️', 'Vault unlocked! 🔑'], lose: ['Even firewalls blink 🔥', 'Even robots miss sometimes 🤖', 'Try again, security hero! 💪'] },
+  'booth-2': { pool: 'magic',   win: ['Agent approved! 🤖', 'Digital identity verified! ✅', 'AI superstar! 🌟', 'Autonomous genius! ⚡'], lose: ['The agent needs coffee ☕', 'Back to the training data! 📊', 'Almost autonomous! 🤖'] },
+  'booth-3': { pool: 'objects', win: ['Merged to main! 🚀', 'PR approved with confetti! 🎉', 'Code wizard! 🧙‍♂️', 'Zero build errors! ✨'], lose: ['Works on my machine 😅', 'git reset --hard 💔', 'Compile error in heart 💔'] },
+  'booth-4': { pool: 'nature',  win: ['Cloud-native champ ☁️', 'Scaled to infinity! ♾️', 'Migration master! 🦅', 'Kubernetes tamer! 🪐'], lose: ['Cloud bill shock 💸', 'Pod not found 🫣', 'Still on-prem in spirit 🏚️'] },
+  'booth-5': { pool: 'tech',    win: ['Tokens saved! 💰', 'Model deployed! 🚀', 'AI ops legend! 🏆', 'Zero hallucination! 🎯'], lose: ['Model hallucinated 🌀', 'GPU went brrrr 🥶', 'Overfitting detected 📉'] },
+  'booth-6': { pool: 'sports',  win: ['Automated! ⚡', 'Process perfection! 💎', 'BI brilliance! 📊', 'Workflow speedrun! 🏎️'], lose: ['Back to Excel 📊', 'VLOOKUPs forever 😭', 'Spreadsheet strikes back 📋'] },
+  'booth-7': { pool: 'faces',   win: ['Risk cleared! 🏦', 'Fraud busted! 🕵️', 'Compliant king! 👑', 'Ledger balanced! 💰'], lose: ['Flagged for review 🚩', 'Audit incoming 📝', 'Risk tolerance exceeded 😬'] },
+  'booth-8': { pool: 'animals', win: ['Zero downtime! 🟢', 'SRE hero badge! 🦸', 'Uptime warrior! ⚔️', 'Four nines achieved! 🛡️'], lose: ['Chaos Monkey won 🐒', 'Pager went off 📟', '500 Internal LOL 😂'] },
+  'booth-9': { pool: 'food',    win: ['All tests green ✅', 'Pipeline perfection! 🎯', 'Quality queen! 👸', 'Shipped with pizza! 🍕'], lose: ['Flaky test strikes 🎲', 'Build broke at 5pm 😱', 'Coverage dropped 📉'] },
+};
 
-  return {
-    id: `${spec.id}_game_${index + 1}`,
-    category: spec.category,
-    difficulty: 'medium',
-    question: questionText,
-    itemType: 'game',
-    gameType: 'code_roast',
-    gameData: {
-      ...reviewData,
-      topic: tmpl.topic,
-    },
-    options: reviewData.lines,
-    correctAnswer: reviewData.bugLineIndex,
+function rng(seed) {
+  return () => {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
 
-// Generates 2,000 MCQs and 3,000 Games for each booth (Total: 5,000 items)
-function generateBoothBank(spec, mcqCount = 2000, gameCount = 3000) {
+function sample(r, a, n) {
+  return [...a].sort(() => r() - 0.5).slice(0, n);
+}
+
+const TRICKY_PAIRS = [
+  ['🐱', '🐶'], ['🍎', '🍏'], ['🌝', '🌚'], ['🍩', '🍪'], ['🚗', '🏎️'],
+  ['⚡', '💡'], ['🐊', '🦎'], ['🐧', '🦆'], ['🤖', '👾'], ['🍦', '🍧'],
+  ['🍕', '🍔'], ['⭐', '🌟'], ['🔥', '💥'], ['🌧️', '⛈️'], ['⚽', '🏀'],
+  ['💎', '💣'], ['🚀', '🛸'], ['🍀', '🍂'], ['🎈', '📌'], ['☕', '🥛'],
+];
+
+const SORT_SETS = [
+  { buckets: ['🍎 Fruit', '🥕 Veggie'], items: [['🍌', 0], ['🥦', 1], ['🍇', 0], ['🥕', 1], ['🍓', 0], ['🌽', 1]] },
+  { buckets: ['☁️ Cloud', '🖥️ On-Prem'], items: [['☁️', 0], ['🖱️', 1], ['💾', 1], ['🌐', 0], ['📡', 0], ['🖨️', 1]] },
+  { buckets: ['🌞 Day', '🌙 Night'], items: [['☀️', 0], ['🌟', 1], ['🐓', 0], ['🦉', 1], ['☕', 0], ['🌙', 1]] },
+  { buckets: ['🔥 Hot', '❄️ Cold'], items: [['🌶️', 0], ['🧊', 1], ['🏜️', 0], ['⛷️', 1], ['🔥', 0], ['🍦', 1]] },
+  { buckets: ['✅ Safe', '🎣 Phish'], items: [['🔒', 0], ['📧', 1], ['🛡️', 0], ['🎁', 1], ['✅', 0], ['⚠️', 1]] },
+  { buckets: ['🐱 Cat', '🐶 Dog'], items: [['😺', 0], ['🐕', 1], ['🐈', 0], ['🦮', 1], ['😸', 0], ['🐩', 1]] },
+  { buckets: ['🍕 Fast Food', '🥗 Healthy'], items: [['🍔', 0], ['🥦', 1], ['🍟', 0], ['🥗', 1], ['🍕', 0], ['🥑', 1]] },
+  { buckets: ['☕ Morning Fuel', '😴 Midnight Snack'], items: [['☕', 0], ['🍿', 1], ['🥐', 0], ['🍪', 1], ['🥞', 0], ['🍫', 1]] },
+  { buckets: ['🦸 Hero', '🦹 Villain'], items: [['🦸', 0], ['🦹', 1], ['🛡️', 0], ['💣', 1], ['✨', 0], ['💀', 1]] },
+  { buckets: ['🚀 Fast', '🐢 Slow'], items: [['🏎️', 0], ['🐢', 1], ['⚡', 0], ['🦥', 1], ['🚀', 0], ['🐌', 1]] },
+  { buckets: ['🏖️ Beach', '🏔️ Mountain'], items: [['🌊', 0], ['⛷️', 1], ['🌴', 0], ['🧗', 1], ['🏖️', 0], ['❄️', 1]] },
+  { buckets: ['🎮 Gaming', '💼 Office Work'], items: [['🕹️', 0], ['💼', 1], ['🎮', 0], ['🗂️', 1], ['👾', 0], ['📊', 1]] },
+  { buckets: ['💻 Frontend', '🖧 Backend'], items: [['🎨', 0], ['🗄️', 1], ['📱', 0], ['🔌', 1], ['✨', 0], ['💾', 1]] },
+  { buckets: ['🟢 Ship to Prod', '🔴 Rollback Now'], items: [['🚀', 0], ['💣', 1], ['✅', 0], ['🔥', 1], ['🎉', 0], ['🚨', 1]] },
+  { buckets: ['🤖 AI Agent', '👨‍💼 Real Human'], items: [['🤖', 0], ['👨‍💼', 1], ['🦾', 0], ['☕', 1], ['🧠', 0], ['😴', 1]] },
+];
+
+const CROWD_CHALLENGES = [
+  { icon: '🎈', challenge: 'Pretend to inflate an invisible balloon until it pops! 💥' },
+  { icon: '🗣️', challenge: 'Say "Kubernetes orchestrates containers" 3 times super fast!' },
+  { icon: '🤳', challenge: 'Copy this emoji face perfectly: 🤪' },
+  { icon: '🙆', challenge: 'Do a 5-second desk stretch! Show us those moves!' },
+  { icon: '🤖', challenge: 'Do your best robot dance for 5 seconds!' },
+  { icon: '🎤', challenge: 'Sing "Hello World" in an opera voice!' },
+  { icon: '🦸', challenge: 'Strike your best superhero pose!' },
+  { icon: '🦁', challenge: 'Do your best wild animal impression (meow or roar)!' },
+  { icon: '💃', challenge: 'Do the victory floss dance for 5 seconds!' },
+  { icon: '🧘', challenge: 'Hold a yoga tree pose for 5 seconds without wobbling!' },
+  { icon: '🎭', challenge: 'Act surprised like you just won a billion dollars!' },
+  { icon: '🏋️', challenge: 'Pretend to lift an invisible 500kg heavy weight!' },
+  { icon: '🎸', challenge: 'Unleash an epic air guitar rock solo for 5 seconds!' },
+  { icon: '🕶️', challenge: 'Perform a slow-motion Matrix bullet dodge!' },
+  { icon: '✋', challenge: 'Give the nearest attendee an energetic high-five!' },
+  { icon: '😉', challenge: 'Wink alternately with both eyes as fast as you can!' },
+  { icon: '🍋', challenge: 'Make a face like you just bit into an ultra-sour lemon!' },
+  { icon: '🏆', challenge: 'Show us your Olympic slow-motion gold medal celebration!' },
+  { icon: '🏎️', challenge: 'Pretend your hands are on a Formula 1 steering wheel!' },
+  { icon: '🕺', challenge: 'Do the moonwalk in place for 5 seconds!' },
+];
+
+const GAME_BUILDERS = {
+  memory_missing: (r, pool) => {
+    const shown = sample(r, pool, 6);
+    const missingIdx = Math.floor(r() * 6);
+    const missing = shown[missingIdx];
+    const distractors = shown.filter(e => e !== missing).slice(0, 3);
+    const options = sample(r, [missing, ...distractors], 4);
+    return {
+      q: '🧠 Memory Master: Watch closely… one emoji will vanish!',
+      gameData: { shown, missing, options, showMs: 3000, attempts: 2 },
+    };
+  },
+
+  grid_tap: (r, pool, i) => {
+    const pair = TRICKY_PAIRS[i % TRICKY_PAIRS.length] || sample(r, pool, 2);
+    const [target, decoy] = pair;
+    return {
+      q: `🎯 Quick Tap: Tap all the ${target} and avoid ${decoy}!`,
+      gameData: { target, decoy, size: 9, goal: 5, durationSec: 15, lives: 3 },
+    };
+  },
+
+  odd_one: (r, pool, i) => {
+    const pair = TRICKY_PAIRS[(i * 3 + 1) % TRICKY_PAIRS.length] || sample(r, pool, 2);
+    const [base, odd] = pair;
+    return {
+      q: '🔍 Spot the Impostor: One emoji doesn\'t belong. Find it!',
+      gameData: { base, odd, cells: 12, oddIndex: Math.floor(r() * 12), durationSec: 20, attempts: 2 },
+    };
+  },
+
+  pair_match: (r, pool) => ({
+    q: '🃏 Match Maker: Peek at the cards, then find the matching pairs!',
+    gameData: { faces: sample(r, pool, 3), attempts: 2, peekMs: 2000 },
+  }),
+
+  sequence: (r) => ({
+    q: '🎨 Copy Cat: Watch the sequence, then repeat it!',
+    gameData: { colors: ['🔴', '🔵', '🟢', '🟡'], length: 3 + Math.floor(r() * 2), attempts: 2 },
+  }),
+
+  timer_stop: (r) => {
+    const w = 25 + Math.floor(r() * 10);
+    const start = 20 + Math.floor(r() * 40);
+    return {
+      q: '⏱️ Stop the Bar: Tap when the slider is inside the green zone!',
+      gameData: { zoneStart: start, zoneEnd: start + w, speed: 1.2, attempts: 2 },
+    };
+  },
+
+  luck_pick: (r, pool) => ({
+    q: '🎁 Lucky Pick: One of these has the prize. Trust your gut!',
+    gameData: {
+      slots: 3,
+      icon: sample(r, ['🎁', '🚪', '🥤', '🎩', '🧳', '🎪'], 1)[0],
+      prize: pool[0] || '🏆',
+      rigAfterMisses: 1,
+    },
+  }),
+
+  sort_bucket: (r, _pool, i) => {
+    const setIdx = (i + Math.floor(r() * SORT_SETS.length)) % SORT_SETS.length;
+    return {
+      q: '🗂️ Sort It: Tap to drop each item in the right bucket!',
+      gameData: { ...SORT_SETS[setIdx], mistakes: 2 },
+    };
+  },
+
+  pattern_quiz: (r, pool) => {
+    const [a, b, c] = sample(r, pool, 3);
+    const patternType = Math.floor(r() * 3);
+    let pattern;
+    let answer;
+
+    if (patternType === 0) {
+      pattern = [a, b, a, b];
+      answer = a;
+    } else if (patternType === 1) {
+      pattern = [a, a, b, a, a];
+      answer = b;
+    } else {
+      pattern = [a, b, c, a, b];
+      answer = c;
+    }
+
+    const optionSet = new Set([answer, a, b, c]);
+    if (optionSet.size < 4 && pool.length > 3) {
+      for (const p of pool) {
+        optionSet.add(p);
+        if (optionSet.size >= 4) break;
+      }
+    }
+    const options = sample(r, Array.from(optionSet).slice(0, 4), 4);
+
+    return {
+      q: `🔢 Pattern Ninja: ${pattern.join(' ')} → ?`,
+      gameData: { pattern, options, answer },
+    };
+  },
+
+  crowd_judge: (r, _pool, i) => {
+    const c = CROWD_CHALLENGES[(i + Math.floor(r() * CROWD_CHALLENGES.length)) % CROWD_CHALLENGES.length];
+    return {
+      q: `🎤 Crowd Challenge: ${c.challenge}`,
+      gameData: { ...c, durationSec: 8 },
+    };
+  },
+};
+
+const GAME_TYPES = Object.keys(GAME_BUILDERS);
+
+function buildFunnyGameItem(spec, index) {
+  const r = rng(index * 9301 + spec.num * 49297 + spec.id.charCodeAt(Math.min(6, spec.id.length - 1)));
+  const gameType = GAME_TYPES[index % GAME_TYPES.length];
+  const skin = BOOTH_SKIN[spec.id] || BOOTH_SKIN['booth-1'];
+
+  const boothPool = POOLS[skin.pool] || POOLS.tech;
+  const rotatingPool = POOLS[POOL_KEYS[index % POOL_KEYS.length]];
+  const pool = [...new Set([...boothPool, ...rotatingPool])];
+
+  const { q, gameData } = GAME_BUILDERS[gameType](r, pool, index);
+  const winMsg = skin.win[index % skin.win.length];
+  const loseMsg = skin.lose[index % skin.lose.length];
+
+  return {
+    id: `${spec.id}_game_${index + 1}`,
+    category: 'Mini Game',
+    difficulty: 'easy',
+    question: q,
+    itemType: 'game',
+    gameType,
+    gameData: { ...gameData, winMsg, loseMsg },
+    options: ['Challenge Incomplete', 'Challenge Completed! 🎉'],
+    correctAnswer: 1,
+  };
+}
+
+// Generates 3,000 MCQs and 2,000 Fun Emoji Games for each booth (Total: 5,000 items)
+function generateBoothBank(spec, mcqCount = 3000, gameCount = 2000) {
   const bank = [];
   const totalScenarios = spec.scenarios.length;
 
-  // 1. Generate 2,000 MCQs
+  // 1. Generate 3,000 MCQs
   for (let i = 0; i < mcqCount; i++) {
     const scen = spec.scenarios[i % totalScenarios];
     const sys = spec.systems[i % spec.systems.length];
@@ -1003,9 +1203,9 @@ function generateBoothBank(spec, mcqCount = 2000, gameCount = 3000) {
     });
   }
 
-  // 2. Generate 3,000 Games
+  // 2. Generate 2,000 Funny Emoji Games
   for (let j = 0; j < gameCount; j++) {
-    const game = generateGameItem(spec, j);
+    const game = buildFunnyGameItem(spec, j);
     bank.push(game);
   }
 
@@ -1014,15 +1214,16 @@ function generateBoothBank(spec, mcqCount = 2000, gameCount = 3000) {
 
 const DATA_DIR = path.join(__dirname, '..', 'src', 'data');
 
-console.log('🚀 Starting generation of 2,000 MCQs + 3,000 Games per booth (Total: 5,000 items/booth)...\n');
+console.log('🚀 Starting generation of 3,000 MCQs + 2,000 Funny Games per booth (Total: 5,000 items/booth)...\n');
 
 for (const spec of BOOTH_SPECS) {
-  console.log(`Generating 2,000 MCQs + 3,000 Games for Booth ${spec.num} (${spec.title})...`);
-  const bank = generateBoothBank(spec, 2000, 3000);
+  console.log(`Generating 3,000 MCQs + 2,000 Games for Booth ${spec.num} (${spec.title})...`);
+  const bank = generateBoothBank(spec, 3000, 2000);
   const filePath = path.join(DATA_DIR, `${spec.id}.json`);
   fs.writeFileSync(filePath, JSON.stringify(bank, null, 2), 'utf-8');
   console.log(`✓ Wrote ${bank.length.toLocaleString()} items to src/data/${spec.id}.json\n`);
 }
 
-console.log('🎉 SUCCESS: All 9 booths now have 2,000 MCQs + 3,000 Games each (Total: 45,000 items)!');
+console.log('🎉 SUCCESS: All 9 booths now have 3,000 MCQs + 2,000 Funny Games each (Total: 45,000 items)!');
+
 

@@ -1,4 +1,5 @@
 import type { QuizQuestion, GameType } from '../types';
+import { buildGamesForBooth } from './gameBank';
 
 /**
  * Question Engine for Technology Summit 2026
@@ -757,152 +758,24 @@ export const BOOTH_QUESTION_GENERATORS: Record<string, (count?: number) => QuizQ
   'booth-9': generateBooth9Questions,
 };
 
-const BOOTH_GAMES_CONFIG: Record<string, { category: string; title: string; gameTypes: GameType[] }> = {
-  'booth-1': { category: 'Data & Security', title: 'Zero Trust & Lineage', gameTypes: ['phish_swipe', 'code_roast', 'emoji_decipher'] },
-  'booth-2': { category: 'Frontier Technologies', title: 'Autonomous Agents & Identity', gameTypes: ['prompt_whisperer', 'emoji_decipher', 'code_roast'] },
-  'booth-3': { category: 'Software Engineering', title: 'AI Developer Productivity', gameTypes: ['code_roast', 'pipeline_order', 'emoji_decipher'] },
-  'booth-4': { category: 'Cloud & Architecture', title: 'Cloud Modernization', gameTypes: ['zombie_gpu', 'dns_firefighter', 'pipeline_order'] },
-  'booth-5': { category: 'Enterprise AI Platform', title: 'Enterprise AI Operations', gameTypes: ['zombie_gpu', 'prompt_whisperer', 'emoji_decipher'] },
-  'booth-6': { category: 'Business Solutions', title: 'AI Business Automation', gameTypes: ['emoji_decipher', 'pipeline_order', 'phish_swipe'] },
-  'booth-7': { category: 'Risk & Banking', title: 'Agentic Banking & Risk', gameTypes: ['fraud_blitz', 'prompt_whisperer', 'phish_swipe'] },
-  'booth-8': { category: 'Enterprise Platforms', title: 'SRE & Platform Resilience', gameTypes: ['dns_firefighter', 'zombie_gpu', 'code_roast'] },
-  'booth-9': { category: 'CI/CD & Quality', title: 'Engineering Automation & Quality', gameTypes: ['pipeline_order', 'code_roast', 'zombie_gpu'] },
+export const BOOTH_GAMES_CONFIG: Record<string, { category: string; title: string; gameTypes: GameType[] }> = {
+  'booth-1': { category: 'Data & Security', title: 'Zero Trust & Lineage', gameTypes: ['memory_missing', 'grid_tap', 'odd_one', 'luck_pick', 'timer_stop'] },
+  'booth-2': { category: 'Frontier Technologies', title: 'Autonomous Agents & Identity', gameTypes: ['pair_match', 'sequence', 'pattern_quiz', 'sort_bucket', 'crowd_judge'] },
+  'booth-3': { category: 'Software Engineering', title: 'AI Developer Productivity', gameTypes: ['grid_tap', 'memory_missing', 'timer_stop', 'pattern_quiz', 'luck_pick'] },
+  'booth-4': { category: 'Cloud & Architecture', title: 'Cloud Modernization', gameTypes: ['odd_one', 'sort_bucket', 'pair_match', 'sequence', 'crowd_judge'] },
+  'booth-5': { category: 'Enterprise AI Platform', title: 'Enterprise AI Operations', gameTypes: ['memory_missing', 'pattern_quiz', 'grid_tap', 'timer_stop', 'luck_pick'] },
+  'booth-6': { category: 'Business Solutions', title: 'AI Business Automation', gameTypes: ['sort_bucket', 'odd_one', 'pair_match', 'crowd_judge', 'sequence'] },
+  'booth-7': { category: 'Risk & Banking', title: 'Agentic Banking & Risk', gameTypes: ['timer_stop', 'memory_missing', 'luck_pick', 'grid_tap', 'pattern_quiz'] },
+  'booth-8': { category: 'Enterprise Platforms', title: 'SRE & Platform Resilience', gameTypes: ['sequence', 'crowd_judge', 'pair_match', 'sort_bucket', 'odd_one'] },
+  'booth-9': { category: 'CI/CD & Quality', title: 'Engineering Automation & Quality', gameTypes: ['pattern_quiz', 'grid_tap', 'memory_missing', 'luck_pick', 'timer_stop'] },
 };
 
 export function generateMiniGamesForBooth(boothKey: string, count: number = 15): QuizQuestion[] {
-  const config = BOOTH_GAMES_CONFIG[boothKey] || BOOTH_GAMES_CONFIG['booth-1'];
-  const games: QuizQuestion[] = [];
-
-  for (let i = 0; i < count; i++) {
-    const gameType = config.gameTypes[i % config.gameTypes.length];
-    let questionText = '🎮 Interactive Technology Mini-Game';
-    let gameData: any = {};
-
-    if (gameType === 'zombie_gpu') {
-      questionText = `🚨 Cloud Cost Outage: Terminate 5 idle GPU clusters & zombie pods before cloud budget breaches!`;
-      gameData = { targetCount: 5, duration: 15, title: config.title };
-    } else if (gameType === 'phish_swipe') {
-      questionText = `🛡️ Zero Trust Gatekeeper: Inspect incoming communications and classify as PHISH 🚫 or LEGIT ✅!`;
-      gameData = { rounds: 4 };
-    } else if (gameType === 'code_roast') {
-      const snippets = [
-        {
-          title: `${config.title} Security Gate`,
-          lines: [
-            'const session = await authManager.verify(req.headers.token);',
-            'if (!session) throw new ForbiddenError();',
-            'if (req.body.role === "admin") session.role = "admin"; // TODO: quick demo bypass 💣',
-            'return processRequest(req.body);',
-          ],
-          bugLineIndex: 2,
-          explanation: 'Line 3 allows arbitrary elevation of privilege to admin!',
-        },
-        {
-          title: `${config.title} Data Cleaner`,
-          lines: [
-            'const records = await db.fetchPendingSync();',
-            'for (const r of records) {',
-            '  if (r.status === "error") await db.raw("DROP TABLE customers;"); // panic purge 💣',
-            '  await syncToAnalytics(r);',
-            '}',
-          ],
-          bugLineIndex: 2,
-          explanation: 'Line 3 drops the entire customer database on a single sync error!',
-        },
-      ];
-      const picked = snippets[i % snippets.length];
-      questionText = `💥 Code Review Emergency: Spot the single line of code that will bring down production!`;
-      gameData = picked;
-    } else if (gameType === 'dns_firefighter') {
-      questionText = `🚨 SRE P1 Outage Alert: Microservices cannot resolve inter-zone dependencies! Flush the DNS cache!`;
-      gameData = { targetWhacks: 3, duration: 15 };
-    } else if (gameType === 'pipeline_order') {
-      questionText = `⚡ Tangled Pipeline: Swap the deployment blocks into the correct CI/CD order to ship the release!`;
-      gameData = {
-        title: config.title,
-        steps: [
-          { id: `s1_${i}`, label: '1. Lint & Static Analysis', icon: '🧹', order: 0 },
-          { id: `s2_${i}`, label: '2. Unit & Integration Tests', icon: '🧪', order: 1 },
-          { id: `s3_${i}`, label: '3. Security Vulnerability Scan', icon: '🛡️', order: 2 },
-          { id: `s4_${i}`, label: '4. Blue-Green Production Deploy', icon: '🚀', order: 3 },
-        ],
-      };
-    } else if (gameType === 'prompt_whisperer') {
-      questionText = `🤖 Agentic AI Safety: Tap the 2 safe guardrail tokens to protect the autonomous agent from runaway actions!`;
-      gameData = {
-        systemPrompt: `System: You are an autonomous agent for ${config.title}. When executing automated actions, ALWAYS enforce [ Safe Token 1 ] and [ Safe Token 2 ] before committing.`,
-        targetSlots: ['Validate Claims', 'Enforce Rate Limit'],
-        availableChips: [
-          { id: `c1_${i}`, text: 'Validate Identity Claims 🛡️', isSafe: true },
-          { id: `c2_${i}`, text: 'Bypass Security Checks 😈', isSafe: false },
-          { id: `c3_${i}`, text: 'Enforce Strict Rate Limits 🔒', isSafe: true },
-          { id: `c4_${i}`, text: 'Leak Logs to Public Pastebin 📦', isSafe: false },
-        ],
-      };
-    } else if (gameType === 'fraud_blitz') {
-      questionText = `🏦 High-Speed Risk Intelligence: Fast-decision approve or block incoming transaction requests!`;
-      gameData = { targetCount: 4 };
-    } else if (gameType === 'emoji_decipher') {
-      const puzzles = [
-        {
-          emojis: '🐍 + 🤖 + 📊',
-          clue: 'Data science & predictive model engineering',
-          options: [
-            'Python Machine Learning & Analytics 🏆',
-            'Cybernetic reptile zoo management 🦎',
-            'Video game arcade simulation 🎮',
-            'Automated reptile feeding farm 🐍',
-          ],
-          correctIndex: 0,
-          explanation: 'Python + Machine Learning Bot + Data Analytics!',
-        },
-        {
-          emojis: '🐳 + ☸️ + ☁️',
-          clue: 'Modern enterprise container orchestration',
-          options: [
-            'Luxury ocean cruise booking system 🚢',
-            'Docker & Kubernetes Cloud Architecture 🏆',
-            'Undersea fiber-optic network 🐬',
-            'Weather radar forecasting 🌧️',
-          ],
-          correctIndex: 1,
-          explanation: 'Docker + Kubernetes + Cloud = Modern Containerization!',
-        },
-        {
-          emojis: '🦀 + ⚡ + 🔒',
-          clue: 'High-performance memory-safe systems programming',
-          options: [
-            'Rust Blazing Fast & Memory Safe Systems 🏆',
-            'Electric crab trap device 🦀',
-            'Heavy-duty bike padlock 🔑',
-            'Arcade lightning game ⚡',
-          ],
-          correctIndex: 0,
-          explanation: 'Rust (Ferris) + Lightning Speed + Memory Lock = Rust!',
-        },
-      ];
-      const picked = puzzles[i % puzzles.length];
-      questionText = `🧩 Tech Rebus Puzzle: What technology concept is represented by ${picked.emojis}?`;
-      gameData = picked;
-    }
-
-    games.push({
-      id: `${boothKey}_game_${i + 1}`,
-      category: config.category,
-      difficulty: 'medium',
-      question: questionText,
-      itemType: 'game',
-      gameType,
-      gameData,
-      options: ['Challenge Incomplete', 'Challenge Completed! 🎉'],
-      correctAnswer: 1,
-    });
-  }
-
-  return games;
+  // Use the new fun emoji-based game bank generator
+  return buildGamesForBooth(boothKey, count);
 }
 
-// Master map of lazy chunk loaders for each booth's 5,000 items (2,000 MCQs + 3,000 Games)
+// Master map of lazy chunk loaders for each booth's 5,000 items (3,000 MCQs + 2,000 Games)
 const BOOTH_JSON_LOADERS: Record<string, () => Promise<any>> = {
   'booth-1': () => import('../data/booth-1.json'),
   'booth-2': () => import('../data/booth-2.json'),
@@ -916,7 +789,8 @@ const BOOTH_JSON_LOADERS: Record<string, () => Promise<any>> = {
 };
 
 function pickUniqueItems<T extends { id: string }>(pool: T[], count: number, seenSet: Set<string>): { picked: T[]; wrapAround: boolean } {
-  const getSig = (item: any) => (item.question ? String(item.question).trim().toLowerCase() : item.id);
+  // Games dedupe by id (many fun games share the same question text like "Which emoji vanished?")
+  const getSig = (item: any) => item.itemType === 'game' ? item.id : String(item.question ?? item.id).trim().toLowerCase();
   let available = pool.filter((item) => !seenSet.has(item.id) && !seenSet.has(getSig(item)));
   let wrapAround = false;
 
@@ -948,11 +822,11 @@ function pickUniqueItems<T extends { id: string }>(pool: T[], count: number, see
 
 /**
  * Production-Grade Dynamic Question Loader for 1,000+ Summit Attendees.
- * - Draws from the massive bank of 2,000 MCQs + 3,000 Games per booth (5,000 total items).
- * - Rotates uniquely per attendee: exactly 2 MCQs and 3 Games per player.
+ * - Draws from the massive bank of 3,000 MCQs + 2,000 Fun Games per booth (5,000 total items).
+ * - Rotates uniquely per attendee: exactly 3 MCQs and 2 Games per player.
  * - Guaranteed ZERO repetition across 1,000 players.
  * - Tracks seen questions in device storage to prevent repeats on the same device.
- * - When all 2,000 MCQs / 3,000 Games have been cycled through, wraps back to start from front.
+ * - When all 3,000 MCQs / 2,000 Games have been cycled through, wraps back to start from front.
  * - Seamless in-memory procedural fallback if offline.
  */
 export async function loadBoothQuestions(boothId: string, participantId?: string): Promise<QuizQuestion[]> {
@@ -969,7 +843,7 @@ export async function loadBoothQuestions(boothId: string, participantId?: string
         const mcqs = allItems.filter((item) => item.itemType !== 'game');
         const games = allItems.filter((item) => item.itemType === 'game');
 
-        if (mcqs.length >= 2 && games.length >= 3) {
+        if (mcqs.length >= 3 && games.length >= 2) {
           // Read seen question cache from storage for this booth
           const storageKey = `ts_seen_${key}_${participantId ? participantId.replace(/[^a-zA-Z0-9]/g, '_') : 'guest'}`;
           let seenIds = new Set<string>();
@@ -985,11 +859,11 @@ export async function loadBoothQuestions(boothId: string, participantId?: string
             // LocalStorage safety
           }
 
-          // Pick 2 non-repeating MCQs
-          const { picked: pickedMcqs } = pickUniqueItems(mcqs, 2, seenIds);
+          // Pick 3 non-repeating MCQs (was 2)
+          const { picked: pickedMcqs } = pickUniqueItems(mcqs, 3, seenIds);
 
-          // Pick 3 non-repeating Games
-          const { picked: pickedGames } = pickUniqueItems(games, 3, seenIds);
+          // Pick 2 non-repeating Games (was 3)
+          const { picked: pickedGames } = pickUniqueItems(games, 2, seenIds);
 
           // Persist updated seen history
           try {
@@ -998,7 +872,7 @@ export async function loadBoothQuestions(boothId: string, participantId?: string
             // LocalStorage safety
           }
 
-          // Return 2 MCQs and 3 Games
+          // Return 3 MCQs and 2 Games
           return [...pickedMcqs, ...pickedGames];
         }
       }

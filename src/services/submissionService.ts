@@ -98,13 +98,14 @@ export async function submitResult(
   // 2. Persist in local storage immediately so score is never lost
   saveSubmissionRecord(submission);
 
-  // 3. Initiate background sync with 3 automatic retries
-  syncSubmission(submission).then((synced) => {
+  // 3. Hold on until record is saved to Firebase (with 3 automatic retries)
+  try {
+    const synced = await syncSubmission(submission);
     onSyncStatus?.(synced ? 'synced' : 'sync-failed');
-  }).catch((err) => {
+  } catch (err) {
     console.warn('[Submission] Background sync error:', err);
     onSyncStatus?.('sync-failed');
-  });
+  }
 
   return submission;
 }

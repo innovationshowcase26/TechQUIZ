@@ -7501,4 +7501,663 @@ input:focus, select:focus, textarea:focus, .ts-field__input:focus {
 }
 
 
+/* ═══════════════════════════════════════════════════════════════════
+   EMOJI MINI-GAME STYLES — Fun, colorful, accessible game UI
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Game container */
+.emoji-game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0.5rem;
+  width: 100%;
+}
+
+.emoji-game__instruction {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--app-text-primary, #e2e8f0);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.emoji-game__tries {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--app-text-muted, #94a3b8);
+  margin-left: 0.25rem;
+}
+
+.emoji-game__highlight {
+  color: #38bdf8;
+  font-weight: 800;
+}
+
+.emoji-game__danger {
+  color: #f87171;
+  font-weight: 800;
+}
+
+.emoji-game__pulse {
+  display: inline-block;
+  animation: emojiPulse 1s ease-in-out infinite;
+}
+
+/* HUD (score/lives bar) */
+.emoji-game__hud {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: rgba(30, 41, 59, 0.7);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  border: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+/* Emoji Grid layouts */
+.emoji-grid {
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.emoji-grid--2col { grid-template-columns: repeat(2, 1fr); }
+.emoji-grid--3col { grid-template-columns: repeat(3, 1fr); }
+.emoji-grid--4col { grid-template-columns: repeat(4, 1fr); }
+.emoji-grid--luck {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+/* Emoji cells */
+.emoji-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  min-height: 56px;
+  border-radius: 12px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 2px solid rgba(56, 189, 248, 0.15);
+  transition: all 0.2s ease;
+}
+
+.emoji-cell--glow {
+  animation: emojiGlow 1.5s ease-in-out infinite alternate;
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.emoji-cell--small {
+  font-size: 1.5rem;
+  min-height: 40px;
+  padding: 0.4rem;
+}
+
+.emoji-cell--missing {
+  background: rgba(248, 113, 113, 0.15);
+  border-color: rgba(248, 113, 113, 0.3);
+  animation: emojiPulse 1s ease-in-out infinite;
+}
+
+.emoji-cell--tappable {
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.emoji-cell--tappable:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: scale(1.05);
+}
+
+.emoji-cell--tappable:active {
+  transform: scale(0.92);
+}
+
+.emoji-cell--flash {
+  animation: cellFlash 0.3s ease-out;
+}
+
+/* Card flip styles */
+.emoji-cell--card {
+  cursor: pointer;
+  min-height: 72px;
+  font-size: 2.2rem;
+  transition: all 0.3s ease;
+  perspective: 400px;
+}
+
+.emoji-cell--card-down {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.emoji-cell--card-down:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.45), rgba(139, 92, 246, 0.45));
+  transform: scale(1.05);
+}
+
+.emoji-cell--card-up {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.emoji-cell--matched {
+  background: rgba(34, 197, 94, 0.2) !important;
+  border-color: rgba(34, 197, 94, 0.5) !important;
+  animation: matchBounce 0.5s ease-out;
+}
+
+/* Sequence game */
+.emoji-cell--sequence {
+  font-size: 2.4rem;
+  min-height: 68px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.emoji-cell--sequence:hover:not(:disabled) {
+  transform: scale(1.08);
+}
+
+.emoji-cell--sequence:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.emoji-cell--active-flash {
+  background: rgba(250, 204, 21, 0.3) !important;
+  border-color: rgba(250, 204, 21, 0.6) !important;
+  transform: scale(1.15);
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.4);
+}
+
+.emoji-game__progress {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+}
+
+.emoji-game__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(100, 116, 139, 0.4);
+  border: 2px solid rgba(100, 116, 139, 0.6);
+  transition: all 0.3s ease;
+}
+
+.emoji-game__dot--filled {
+  background: #22c55e;
+  border-color: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+/* Pattern display */
+.emoji-cell--pattern {
+  font-size: 1.8rem;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 0.3rem;
+}
+
+.emoji-game__pattern-display {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0.75rem;
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+.emoji-game__remaining {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+/* Luck pick styles */
+.emoji-cell--luck {
+  font-size: 2.5rem;
+  min-height: 80px;
+  cursor: pointer;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.2));
+  border-color: rgba(139, 92, 246, 0.3);
+  transition: all 0.3s ease;
+}
+
+.emoji-cell--luck:hover:not(:disabled) {
+  transform: scale(1.08) rotate(2deg);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.emoji-cell--prize-won {
+  background: rgba(34, 197, 94, 0.25) !important;
+  border-color: rgba(34, 197, 94, 0.5) !important;
+  animation: prizeReveal 0.5s ease-out;
+}
+
+.emoji-cell--prize-empty {
+  background: rgba(100, 116, 139, 0.2) !important;
+  border-color: rgba(100, 116, 139, 0.3) !important;
+  opacity: 0.7;
+}
+
+/* Sort bucket styles */
+.emoji-game__sort-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 1rem;
+  background: rgba(30, 41, 59, 0.6);
+  border-radius: 16px;
+  border: 2px solid rgba(56, 189, 248, 0.2);
+  transition: all 0.3s ease;
+}
+
+.emoji-game__sort-item--correct {
+  border-color: rgba(34, 197, 94, 0.5);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.emoji-game__sort-item--wrong {
+  border-color: rgba(248, 113, 113, 0.5);
+  background: rgba(248, 113, 113, 0.1);
+  animation: shake 0.4s ease-out;
+}
+
+.emoji-game__sort-emoji {
+  font-size: 3rem;
+}
+
+.emoji-game__sort-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--app-text-muted, #94a3b8);
+}
+
+.emoji-game__buckets {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* Buttons */
+.emoji-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  border: 2px solid rgba(56, 189, 248, 0.2);
+  background: rgba(30, 41, 59, 0.6);
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.emoji-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateY(-2px);
+}
+
+.emoji-btn:active {
+  transform: scale(0.95);
+}
+
+.emoji-btn--choice {
+  font-size: 2rem;
+  min-width: 60px;
+  min-height: 60px;
+  padding: 0.5rem;
+}
+
+.emoji-btn--bucket {
+  flex: 1;
+  font-size: 1rem;
+  padding: 0.8rem 0.5rem;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(30, 41, 59, 0.6));
+  text-align: center;
+}
+
+.emoji-btn--bucket:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.2));
+}
+
+.emoji-btn--stop {
+  font-size: 1.1rem;
+  padding: 0.9rem 2rem;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.7), rgba(220, 38, 38, 0.7));
+  border-color: rgba(239, 68, 68, 0.5);
+  letter-spacing: 0.05em;
+}
+
+.emoji-btn--stop:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+.emoji-btn--start {
+  font-size: 1.05rem;
+  padding: 0.9rem 2rem;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.6), rgba(16, 185, 129, 0.6));
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.emoji-btn--start:hover {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.8), rgba(16, 185, 129, 0.8));
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+}
+
+.emoji-btn--approve {
+  flex: 1;
+  font-size: 0.95rem;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.6), rgba(16, 185, 129, 0.6));
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.emoji-btn--retry {
+  flex: 1;
+  font-size: 0.95rem;
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.5), rgba(234, 88, 12, 0.5));
+  border-color: rgba(251, 146, 60, 0.4);
+}
+
+/* Options layout */
+.emoji-game__options {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Timer bar */
+.emoji-timer-bar {
+  width: 100%;
+  padding: 0 0.5rem;
+}
+
+.emoji-timer-bar__track {
+  position: relative;
+  height: 32px;
+  background: rgba(30, 41, 59, 0.8);
+  border-radius: 16px;
+  border: 2px solid rgba(100, 116, 139, 0.3);
+  overflow: hidden;
+}
+
+.emoji-timer-bar__zone {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.4), rgba(34, 197, 94, 0.6));
+  border-radius: 16px;
+}
+
+.emoji-timer-bar__cursor {
+  position: absolute;
+  top: -4px;
+  width: 6px;
+  height: 40px;
+  background: #f1f5f9;
+  border-radius: 3px;
+  transform: translateX(-50%);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  transition: left 0.016s linear;
+}
+
+/* Timer bar animation used in memory and crowd games */
+.emoji-game__timer-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(56, 189, 248, 0.2);
+  border-radius: 2px;
+  margin-top: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.emoji-game__timer-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  border-radius: 2px;
+  animation: timerShrink var(--duration, 3s) linear forwards;
+  animation-duration: inherit;
+}
+
+/* Crowd judge styles */
+.emoji-game__big-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.emoji-game__challenge-text {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.emoji-game__countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.emoji-game__countdown-number {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #38bdf8;
+  text-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+  animation: countPulse 1s ease-in-out infinite;
+}
+
+.emoji-game__countdown-label {
+  font-size: 0.8rem;
+  color: var(--app-text-muted, #94a3b8);
+  font-weight: 600;
+}
+
+.emoji-game__crowd-vote {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.emoji-game__vote-prompt {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin: 0;
+}
+
+.emoji-game__vote-buttons {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* Result overlay */
+.emoji-game-result {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 0.5rem;
+  width: 100%;
+}
+
+.emoji-game-result__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 2rem;
+  border-radius: 16px;
+  text-align: center;
+  animation: resultPop 0.5s ease-out;
+}
+
+.emoji-game-result__card--won {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.15));
+  border: 2px solid rgba(34, 197, 94, 0.4);
+}
+
+.emoji-game-result__card--lost {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.15), rgba(234, 88, 12, 0.1));
+  border: 2px solid rgba(251, 146, 60, 0.3);
+}
+
+.emoji-game-result__icon {
+  font-size: 2.5rem;
+}
+
+.emoji-game-result__msg {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin: 0;
+}
+
+/* Celebration */
+.emoji-game__celebration {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #22c55e;
+  text-align: center;
+  animation: celebBounce 0.6s ease-out;
+}
+
+/* Shake animation for wrong answers */
+.emoji-game--shake {
+  animation: shake 0.4s ease-out;
+}
+
+/* ═══════ ANIMATIONS ═══════ */
+
+@keyframes emojiPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+@keyframes emojiGlow {
+  from {
+    box-shadow: 0 0 4px rgba(56, 189, 248, 0.1);
+  }
+  to {
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+  }
+}
+
+@keyframes cellFlash {
+  0% { background: rgba(250, 204, 21, 0.5); transform: scale(0.9); }
+  100% { background: rgba(30, 41, 59, 0.6); transform: scale(1); }
+}
+
+@keyframes matchBounce {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes prizeReveal {
+  0% { transform: scale(0.5) rotate(-10deg); opacity: 0.3; }
+  60% { transform: scale(1.15) rotate(3deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+
+@keyframes timerShrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+@keyframes countPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+@keyframes resultPop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes celebBounce {
+  0% { transform: translateY(10px); opacity: 0; }
+  60% { transform: translateY(-5px); }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* ═══════ RESPONSIVE ═══════ */
+
+@media (max-width: 380px) {
+  .emoji-cell {
+    font-size: 1.6rem;
+    min-height: 48px;
+  }
+
+  .emoji-cell--card {
+    min-height: 60px;
+    font-size: 1.8rem;
+  }
+
+  .emoji-cell--luck {
+    font-size: 2rem;
+    min-height: 68px;
+  }
+
+  .emoji-btn--choice {
+    font-size: 1.6rem;
+    min-width: 52px;
+    min-height: 52px;
+  }
+
+  .emoji-game__sort-emoji {
+    font-size: 2.5rem;
+  }
+
+  .emoji-game__countdown-number {
+    font-size: 2.8rem;
+  }
+
+  .emoji-grid {
+    max-width: 280px;
+  }
+}
 

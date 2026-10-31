@@ -37,7 +37,18 @@ export type GameType =
   | 'prompt_whisperer'
   | 'dns_firefighter'
   | 'fraud_blitz'
-  | 'emoji_decipher';
+  | 'emoji_decipher'
+  // New fun emoji-based mini-game templates
+  | 'memory_missing'
+  | 'grid_tap'
+  | 'odd_one'
+  | 'pair_match'
+  | 'sequence'
+  | 'timer_stop'
+  | 'luck_pick'
+  | 'sort_bucket'
+  | 'pattern_quiz'
+  | 'crowd_judge';
 
 export interface QuizQuestion {
   id: string;
