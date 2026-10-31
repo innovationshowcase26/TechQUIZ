@@ -820,11 +820,91 @@ function pickUniqueItems<T extends { id: string }>(pool: T[], count: number, see
   return { picked, wrapAround };
 }
 
+function pickDistinctGames(
+  gamesPool: QuizQuestion[],
+  count: number = 2,
+  seenIds: Set<string>,
+  participantId?: string
+): QuizQuestion[] {
+  // Global played game types key across all booths for this participant
+  const globalTypesKey = `ts_played_gtypes_${participantId ? participantId.replace(/[^a-zA-Z0-9]/g, '_') : 'guest'}`;
+  let playedTypes: string[] = [];
+  try {
+    const raw = localStorage.getItem(globalTypesKey);
+    if (raw) playedTypes = JSON.parse(raw);
+  } catch {
+    // LocalStorage safety
+  }
+
+  // Filter available games not seen by ID in this booth
+  let available = gamesPool.filter((g) => !seenIds.has(g.id));
+  if (available.length < count) {
+    available = [...gamesPool];
+  }
+
+  // Shuffle available pool
+  const shuffled = shuffle(available);
+  const picked: QuizQuestion[] = [];
+  const pickedInThisBooth = new Set<string>();
+
+  // Pass 1: Try picking games whose gameTypes have not been played recently by attendee
+  const playedSet = new Set(playedTypes);
+  for (const g of shuffled) {
+    const gt = g.gameType || 'game';
+    if (!pickedInThisBooth.has(gt) && !playedSet.has(gt)) {
+      pickedInThisBooth.add(gt);
+      picked.push(g);
+      seenIds.add(g.id);
+      playedTypes.push(gt);
+      if (picked.length === count) break;
+    }
+  }
+
+  // Pass 2: If we still need games, pick games with distinct gameTypes from the current booth
+  if (picked.length < count) {
+    for (const g of shuffled) {
+      const gt = g.gameType || 'game';
+      if (!pickedInThisBooth.has(gt)) {
+        pickedInThisBooth.add(gt);
+        picked.push(g);
+        seenIds.add(g.id);
+        playedTypes.push(gt);
+        if (picked.length === count) break;
+      }
+    }
+  }
+
+  // Pass 3: Ultimate fallback if pool has only 1 gameType
+  if (picked.length < count) {
+    for (const g of shuffled) {
+      if (!picked.includes(g)) {
+        picked.push(g);
+        seenIds.add(g.id);
+        if (picked.length === count) break;
+      }
+    }
+  }
+
+  // If attendee has played through many game types, wrap around
+  try {
+    if (playedTypes.length > 15) {
+      playedTypes = playedTypes.slice(-6);
+    }
+    localStorage.setItem(globalTypesKey, JSON.stringify(playedTypes));
+  } catch {
+    // LocalStorage safety
+  }
+
+  return picked;
+}
+
 /**
  * Production-Grade Dynamic Question Loader for 1,000+ Summit Attendees.
  * - Draws from the massive bank of 3,000 MCQs + 2,000 Fun Games per booth (5,000 total items).
  * - Rotates uniquely per attendee: exactly 3 MCQs and 2 Games per player.
- * - Guaranteed ZERO repetition across 1,000 players.
+ * - Guaranteed distinct game types in the same booth (no game type repeated).
+ * - Tracks played game types across booths so users experience different mini-games.
+ * - Strictly structures questions in balanced alternating order: [MCQ, Game, MCQ, Game, MCQ].
  * - Tracks seen questions in device storage to prevent repeats on the same device.
  * - When all 3,000 MCQs / 2,000 Games have been cycled through, wraps back to start from front.
  * - Seamless in-memory procedural fallback if offline.
@@ -859,11 +939,11 @@ export async function loadBoothQuestions(boothId: string, participantId?: string
             // LocalStorage safety
           }
 
-          // Pick 3 non-repeating MCQs (was 2)
+          // Pick 3 non-repeating MCQs
           const { picked: pickedMcqs } = pickUniqueItems(mcqs, 3, seenIds);
 
-          // Pick 2 non-repeating Games (was 3)
-          const { picked: pickedGames } = pickUniqueItems(games, 2, seenIds);
+          // Pick 2 non-repeating Games with GUARANTEED distinct game types and cross-booth rotation
+          const pickedGames = pickDistinctGames(games, 2, seenIds, participantId);
 
           // Persist updated seen history
           try {
@@ -872,8 +952,14 @@ export async function loadBoothQuestions(boothId: string, participantId?: string
             // LocalStorage safety
           }
 
-          // Return 3 MCQs and 2 Games
-          return [...pickedMcqs, ...pickedGames];
+          // Return in rhythmic alternating order: [MCQ 1, Game 1, MCQ 2, Game 2, MCQ 3]
+          return [
+            pickedMcqs[0],
+            pickedGames[0],
+            pickedMcqs[1],
+            pickedGames[1],
+            pickedMcqs[2]
+          ].filter(Boolean);
         }
       }
     }

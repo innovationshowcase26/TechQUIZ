@@ -58,11 +58,15 @@ function MemoryMissing({ d, onDone }: { d: any; onDone: (won: boolean) => void }
   const [phase, setPhase] = useState<'show' | 'ask'>('show');
   const [tries, setTries] = useState(d.attempts || 2);
   const [shake, setShake] = useState(false);
+  const [wrongChoices, setWrongChoices] = useState<string[]>([]);
+  const [feedback, setFeedback] = useState<string | null>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setPhase('ask'), d.showMs || 3000);
-    return () => clearTimeout(t);
-  }, [d.showMs]);
+    if (phase === 'show') {
+      const t = setTimeout(() => setPhase('ask'), d.showMs || 2800);
+      return () => clearTimeout(t);
+    }
+  }, [phase, d.showMs]);
 
   if (phase === 'show') {
     return (
@@ -75,7 +79,7 @@ function MemoryMissing({ d, onDone }: { d: any; onDone: (won: boolean) => void }
             <div key={i} className="emoji-cell emoji-cell--glow">{e}</div>
           ))}
         </div>
-        <div className="emoji-game__timer-bar" style={{ animationDuration: `${(d.showMs || 3000) / 1000}s` }} />
+        <div className="emoji-game__timer-bar" style={{ animationDuration: `${(d.showMs || 2800) / 1000}s` }} />
       </div>
     );
   }
@@ -83,15 +87,34 @@ function MemoryMissing({ d, onDone }: { d: any; onDone: (won: boolean) => void }
   const remaining = (d.shown as string[]).filter((e: string) => e !== d.missing);
 
   const pick = (e: string) => {
-    if (e === d.missing) return onDone(true);
+    if (wrongChoices.includes(e) || tries <= 0) return;
+
+    if (e === d.missing) {
+      playZapSound();
+      setFeedback('🎉 You spotted it!');
+      setTimeout(() => onDone(true), 600);
+      return;
+    }
+
     playFailBuzz();
     setShake(true);
     setTimeout(() => setShake(false), 500);
-    if (tries - 1 > 0) {
-      setTries(tries - 1);
+
+    const remainingTries = tries - 1;
+    setTries(remainingTries);
+    setWrongChoices(prev => [...prev, e]);
+
+    if (remainingTries > 0) {
+      setFeedback('❌ Not that one! (1 try left)');
     } else {
-      onDone(false);
+      setFeedback('❌ No tries left!');
+      setTimeout(() => onDone(false), 800);
     }
+  };
+
+  const handleReview = () => {
+    setFeedback(null);
+    setPhase('show');
   };
 
   return (
@@ -105,12 +128,33 @@ function MemoryMissing({ d, onDone }: { d: any; onDone: (won: boolean) => void }
         ))}
         <span className="emoji-cell emoji-cell--missing">❓</span>
       </div>
+
+      {feedback && (
+        <div className="emoji-game__feedback emoji-game__feedback--retry">
+          {feedback}
+        </div>
+      )}
+
+      {tries === 1 && wrongChoices.length > 0 && (
+        <button className="emoji-btn emoji-btn--review" onClick={handleReview}>
+          👁️ Quick Peek (Watch Again)
+        </button>
+      )}
+
       <div className="emoji-game__options">
-        {(d.options as string[]).map((e: string, i: number) => (
-          <button key={i} className="emoji-btn emoji-btn--choice" onClick={() => pick(e)}>
-            {e}
-          </button>
-        ))}
+        {(d.options as string[]).map((e: string, i: number) => {
+          const isWrong = wrongChoices.includes(e);
+          return (
+            <button
+              key={i}
+              className={`emoji-btn emoji-btn--choice ${isWrong ? 'emoji-btn--choice-wrong' : ''}`}
+              onClick={() => pick(e)}
+              disabled={isWrong || tries <= 0}
+            >
+              {isWrong ? '❌' : e}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -432,6 +476,7 @@ function TimerStop({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
   const [position, setPosition] = useState(0);
   const [running, setRunning] = useState(true);
   const [tries, setTries] = useState(d.attempts || 2);
+  const [stoppedState, setStoppedState] = useState<'playing' | 'missed' | 'won'>('playing');
   const animRef = useRef<any>(null);
   const startRef = useRef(Date.now());
   const speed = d.speed || 1.2;
@@ -457,24 +502,33 @@ function TimerStop({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
     cancelAnimationFrame(animRef.current);
     
     if (position >= zoneStart && position <= zoneEnd) {
+      setStoppedState('won');
       playZapSound();
-      onDone(true);
+      setTimeout(() => onDone(true), 600);
     } else {
       playFailBuzz();
-      if (tries - 1 > 0) {
-        setTries(tries - 1);
-        startRef.current = Date.now();
-        setRunning(true);
+      const remainingTries = tries - 1;
+      setTries(remainingTries);
+      if (remainingTries > 0) {
+        setStoppedState('missed');
       } else {
-        onDone(false);
+        setStoppedState('missed');
+        setTimeout(() => onDone(false), 900);
       }
     }
+  };
+
+  const handleRetry = () => {
+    startRef.current = Date.now();
+    setPosition(0);
+    setStoppedState('playing');
+    setRunning(true);
   };
 
   return (
     <div className="emoji-game emoji-game--timer">
       <div className="emoji-game__instruction">
-        ⏱️ Tap STOP when the slider is in the <span className="emoji-game__highlight" style={{ color: '#22c55e' }}>green zone</span>!
+        ⏱️ Tap STOP when the slider is in the <span className="emoji-game__highlight" style={{ color: '#16a34a' }}>green zone</span>!
         <span className="emoji-game__tries">({tries} {tries === 1 ? 'try' : 'tries'} left)</span>
       </div>
       <div className="emoji-timer-bar">
@@ -489,9 +543,25 @@ function TimerStop({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
           />
         </div>
       </div>
-      <button className="emoji-btn emoji-btn--stop" onClick={handleStop}>
-        ✋ STOP!
-      </button>
+
+      {stoppedState === 'missed' && tries > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', width: '100%', marginTop: '6px' }}>
+          <div className="emoji-game__feedback emoji-game__feedback--miss">
+            ❌ Missed the green zone! 1 try remaining.
+          </div>
+          <button className="emoji-btn emoji-btn--retry-play" onClick={handleRetry}>
+            🔄 Try Again (1 Try Left)
+          </button>
+        </div>
+      ) : stoppedState === 'won' ? (
+        <div className="emoji-game__feedback emoji-game__feedback--hit">
+          🎯 Bullseye! Direct hit in the zone!
+        </div>
+      ) : (
+        <button className="emoji-btn emoji-btn--stop" onClick={handleStop} disabled={!running}>
+          ✋ STOP!
+        </button>
+      )}
     </div>
   );
 }
@@ -642,26 +712,39 @@ function SortBucket({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
 // ═══════════════════════════════════════════
 function PatternQuiz({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
   const [shake, setShake] = useState(false);
-  const [answered, setAnswered] = useState(false);
+  const [tries, setTries] = useState(2);
+  const [disabledOptions, setDisabledOptions] = useState<string[]>([]);
+  const [feedback, setFeedback] = useState<string | null>(null);
 
   const handlePick = (option: string) => {
-    if (answered) return;
-    setAnswered(true);
+    if (disabledOptions.includes(option) || tries <= 0) return;
+
     if (option === d.answer) {
       playZapSound();
-      onDone(true);
+      setFeedback('🎉 Correct! Pattern solved!');
+      setTimeout(() => onDone(true), 600);
     } else {
       playFailBuzz();
       setShake(true);
       setTimeout(() => setShake(false), 500);
-      onDone(false);
+
+      const remaining = tries - 1;
+      setTries(remaining);
+      setDisabledOptions(prev => [...prev, option]);
+
+      if (remaining > 0) {
+        setFeedback('❌ Not quite! 1 try left — pick another emoji!');
+      } else {
+        setFeedback('❌ Out of tries!');
+        setTimeout(() => onDone(false), 800);
+      }
     }
   };
 
   return (
     <div className={`emoji-game emoji-game--pattern ${shake ? 'emoji-game--shake' : ''}`}>
       <div className="emoji-game__instruction">
-        Complete the pattern!
+        🔢 Complete the pattern! <span className="emoji-game__tries">({tries} {tries === 1 ? 'try' : 'tries'} left)</span>
       </div>
       <div className="emoji-game__pattern-display">
         {(d.pattern as string[]).map((p: string, i: number) => (
@@ -669,12 +752,25 @@ function PatternQuiz({ d, onDone }: { d: any; onDone: (won: boolean) => void }) 
         ))}
         <span className="emoji-cell emoji-cell--pattern emoji-cell--missing">❓</span>
       </div>
+      {feedback && (
+        <div className={`emoji-game__feedback ${tries === 0 ? 'emoji-game__feedback--miss' : 'emoji-game__feedback--retry'}`}>
+          {feedback}
+        </div>
+      )}
       <div className="emoji-game__options">
-        {(d.options as string[]).map((opt: string, i: number) => (
-          <button key={i} className="emoji-btn emoji-btn--choice" onClick={() => handlePick(opt)} disabled={answered}>
-            {opt}
-          </button>
-        ))}
+        {(d.options as string[]).map((opt: string, i: number) => {
+          const isWrong = disabledOptions.includes(opt);
+          return (
+            <button
+              key={i}
+              className={`emoji-btn emoji-btn--choice ${isWrong ? 'emoji-btn--choice-wrong' : ''}`}
+              onClick={() => handlePick(opt)}
+              disabled={isWrong || tries <= 0}
+            >
+              {isWrong ? '❌' : opt}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

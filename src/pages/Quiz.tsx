@@ -193,17 +193,12 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
                   </div>
                   <button
                     type="button"
-                    className="emoji-btn emoji-btn--replay"
+                    className="emoji-btn emoji-btn--retry-play"
                     style={{
                       marginTop: '14px',
                       fontSize: '13px',
-                      fontWeight: 700,
-                      padding: '8px 20px',
-                      background: 'rgba(255,255,255,0.25)',
-                      border: '1px solid rgba(255,255,255,0.4)',
-                      borderRadius: '20px',
-                      color: '#fff',
-                      cursor: 'pointer',
+                      fontWeight: 800,
+                      padding: '8px 22px',
                     }}
                     onClick={() => {
                       setSelectedIdx(null);

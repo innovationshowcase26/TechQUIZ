@@ -30,9 +30,32 @@ export function prepareQuestions(allQuestions: QuizQuestion[], count: number = 5
   const games = uniquePool.filter((q) => q.itemType === 'game');
   const mcqs = uniquePool.filter((q) => q.itemType !== 'game');
 
-  // NEW PATTERN: 3 MCQs + 2 Games (was 2 MCQs + 3 Games)
+  // NEW PATTERN: 3 MCQs + 2 Games with GUARANTEED DISTINCT gameTypes
   let selectedMcqs = shuffleArray(mcqs).slice(0, 3);
-  let selectedGames = shuffleArray(games).slice(0, 2);
+  
+  // Pick 2 games with distinct gameTypes so the same game never appears twice in a booth
+  const shuffledGames = shuffleArray(games);
+  let selectedGames: QuizQuestion[] = [];
+  const pickedTypes = new Set<string>();
+
+  for (const g of shuffledGames) {
+    const gType = g.gameType || (g.gameData ? 'custom' : 'game');
+    if (!pickedTypes.has(gType)) {
+      pickedTypes.add(gType);
+      selectedGames.push(g);
+      if (selectedGames.length === 2) break;
+    }
+  }
+
+  // Fallback if pool did not have 2 distinct game types
+  if (selectedGames.length < 2 && shuffledGames.length > selectedGames.length) {
+    for (const g of shuffledGames) {
+      if (!selectedGames.includes(g)) {
+        selectedGames.push(g);
+        if (selectedGames.length === 2) break;
+      }
+    }
+  }
 
   // If pool didn't have enough MCQs, fill remainder with games
   if (selectedMcqs.length < 3 && selectedGames.length > 0) {
@@ -48,8 +71,34 @@ export function prepareQuestions(allQuestions: QuizQuestion[], count: number = 5
     selectedMcqs = [...selectedMcqs, ...shuffleArray(remainingMcqs).slice(0, extraNeeded)];
   }
 
-  // Combine selected MCQs and Games, then shuffle the 5 items so order is randomized
-  const combined = shuffleArray([...selectedMcqs, ...selectedGames]).slice(0, count);
+  // Proper structured order: Interleaved [MCQ 1, Game 1, MCQ 2, Game 2, MCQ 3]
+  // Gives an engaging rhythm: test knowledge -> play fun mini-game -> test knowledge -> mini-game -> grand finale MCQ!
+  const structured: QuizQuestion[] = [];
+  let mIdx = 0;
+  let gIdx = 0;
+  const pattern = ['mcq', 'game', 'mcq', 'game', 'mcq'];
+
+  for (const slot of pattern) {
+    if (slot === 'mcq' && mIdx < selectedMcqs.length) {
+      structured.push(selectedMcqs[mIdx++]);
+    } else if (slot === 'game' && gIdx < selectedGames.length) {
+      structured.push(selectedGames[gIdx++]);
+    } else if (mIdx < selectedMcqs.length) {
+      structured.push(selectedMcqs[mIdx++]);
+    } else if (gIdx < selectedGames.length) {
+      structured.push(selectedGames[gIdx++]);
+    }
+  }
+
+  // Append any remainder if count > 5
+  while (structured.length < count && mIdx < selectedMcqs.length) {
+    structured.push(selectedMcqs[mIdx++]);
+  }
+  while (structured.length < count && gIdx < selectedGames.length) {
+    structured.push(selectedGames[gIdx++]);
+  }
+
+  const combined = structured.slice(0, count);
 
   return combined.map((q) => {
     if (q.itemType === 'game') {
