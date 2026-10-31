@@ -956,7 +956,7 @@ const POOLS = {
 const POOL_KEYS = Object.keys(POOLS);
 
 const BOOTH_SKIN = {
-  'booth-1': { pool: 'tech',    win: ['Zero Trust? Zero mistakes! 🛡️', 'Firewall champion! 🔥', 'Data guardian supreme! 🗄️', 'Vault unlocked! 🔑'], lose: ['Even firewalls blink 🔥', 'Even robots miss sometimes 🤖', 'Try again, security hero! 💪'] },
+  'booth-1': { pool: 'tech',    win: ['Zero Trust? Zero mistakes! 🛡️', 'Firewall champion! 🔥', 'Data guardian supreme! 🗄️', 'Vault unlocked! 🔑'], lose: ['Even firewalls blink 🔥', 'Even robots miss sometimes 🤖', 'Challenge missed, security hero! 🛡️'] },
   'booth-2': { pool: 'magic',   win: ['Agent approved! 🤖', 'Digital identity verified! ✅', 'AI superstar! 🌟', 'Autonomous genius! ⚡'], lose: ['The agent needs coffee ☕', 'Back to the training data! 📊', 'Almost autonomous! 🤖'] },
   'booth-3': { pool: 'objects', win: ['Merged to main! 🚀', 'PR approved with confetti! 🎉', 'Code wizard! 🧙‍♂️', 'Zero build errors! ✨'], lose: ['Works on my machine 😅', 'git reset --hard 💔', 'Compile error in heart 💔'] },
   'booth-4': { pool: 'nature',  win: ['Cloud-native champ ☁️', 'Scaled to infinity! ♾️', 'Migration master! 🦅', 'Kubernetes tamer! 🪐'], lose: ['Cloud bill shock 💸', 'Pod not found 🫣', 'Still on-prem in spirit 🏚️'] },
@@ -1030,73 +1030,83 @@ const CROWD_CHALLENGES = [
 ];
 
 const GAME_BUILDERS = {
+  // 🧠 Memory Missing: 8 items shown, 6 options, 1 Guess Only
   memory_missing: (r, pool) => {
-    const shown = sample(r, pool, 6);
-    const missingIdx = Math.floor(r() * 6);
+    const shown = sample(r, pool, 8);
+    const missingIdx = Math.floor(r() * 8);
     const missing = shown[missingIdx];
-    const distractors = shown.filter(e => e !== missing).slice(0, 3);
-    const options = sample(r, [missing, ...distractors], 4);
+    const otherShown = shown.filter(e => e !== missing);
+    const distractors = sample(r, otherShown, 5);
+    const options = sample(r, [missing, ...distractors], 6);
     return {
-      q: '🧠 Memory Master: Watch closely… one emoji will vanish!',
-      gameData: { shown, missing, options, showMs: 3000, attempts: 2 },
+      q: '🧠 Memory Master: 8 items memorised… one vanishes! (1 Guess Only)',
+      gameData: { shown, missing, options, showMs: 2500, attempts: 1 },
     };
   },
 
+  // 🎯 Grid Tap: 4x4 (16 cells), 6 targets in 10s, 1 Life (decoy = instant fail)
   grid_tap: (r, pool, i) => {
     const pair = TRICKY_PAIRS[i % TRICKY_PAIRS.length] || sample(r, pool, 2);
     const [target, decoy] = pair;
     return {
-      q: `🎯 Quick Tap: Tap all the ${target} and avoid ${decoy}!`,
-      gameData: { target, decoy, size: 9, goal: 5, durationSec: 15, lives: 3 },
+      q: `🎯 Quick Tap: Collect 6 ${target} in 10s — 1 mistake on ${decoy} = Fail!`,
+      gameData: { target, decoy, size: 16, goal: 6, durationSec: 10, lives: 1 },
     };
   },
 
+  // 🔍 Spot the Impostor: 4x4 (16 cells), subtle lookalike pair, 1 Tap Only
   odd_one: (r, pool, i) => {
     const pair = TRICKY_PAIRS[(i * 3 + 1) % TRICKY_PAIRS.length] || sample(r, pool, 2);
     const [base, odd] = pair;
     return {
-      q: '🔍 Spot the Impostor: One emoji doesn\'t belong. Find it!',
-      gameData: { base, odd, cells: 12, oddIndex: Math.floor(r() * 12), durationSec: 20, attempts: 2 },
+      q: `🔍 Spot Impostor: Find the subtle odd one among 16! (1 Tap Only)`,
+      gameData: { base, odd, cells: 16, oddIndex: Math.floor(r() * 16), durationSec: 12, attempts: 1 },
     };
   },
 
+  // 🃏 Match Maker: 6 cards (3 pairs), 1.8s peek, Zero Errors allowed
   pair_match: (r, pool) => ({
-    q: '🃏 Match Maker: Peek at the cards, then find the matching pairs!',
-    gameData: { faces: sample(r, pool, 3), attempts: 2, peekMs: 2000 },
+    q: '🃏 Match Maker: 3 pairs! Zero Mismatches Allowed (1 Mismatch = Fail)',
+    gameData: { faces: sample(r, pool, 3), attempts: 1, peekMs: 1800 },
   }),
 
+  // 🎨 Copy Cat: 5-step Simon sequence, 1 attempt
   sequence: (r) => ({
-    q: '🎨 Copy Cat: Watch the sequence, then repeat it!',
-    gameData: { colors: ['🔴', '🔵', '🟢', '🟡'], length: 3 + Math.floor(r() * 2), attempts: 2 },
+    q: '🎨 Sequence Ninja: Repeat the 5-step pattern! (1 Mistake = Fail)',
+    gameData: { colors: ['🔥', '⚡', '💧', '🌿'], length: 5, attempts: 1 },
   }),
 
+  // ⏱️ Stop the Bar: Fast 1.65 speed, narrow 14% zone, Strictly 1 Shot
   timer_stop: (r) => {
-    const w = 25 + Math.floor(r() * 10);
-    const start = 20 + Math.floor(r() * 40);
+    const w = 14;
+    const start = 25 + Math.floor(r() * 35);
     return {
-      q: '⏱️ Stop the Bar: Tap when the slider is inside the green zone!',
-      gameData: { zoneStart: start, zoneEnd: start + w, speed: 1.2, attempts: 2 },
+      q: '⏱️ Laser Stop: Stop inside the narrow green zone! (1 Shot Only)',
+      gameData: { zoneStart: start, zoneEnd: start + w, speed: 1.65, attempts: 1 },
     };
   },
 
+  // 🎁 Lucky Pick: 4 vaults, Strictly 1 Choice
   luck_pick: (r, pool) => ({
-    q: '🎁 Lucky Pick: One of these has the prize. Trust your gut!',
+    q: '🎁 Vault Breach: Pick the 1 winning vault among 4! (1 Choice Only)',
     gameData: {
-      slots: 3,
-      icon: sample(r, ['🎁', '🚪', '🥤', '🎩', '🧳', '🎪'], 1)[0],
+      slots: 4,
+      icon: sample(r, ['🔒', '💼', '📦', '🚪', '🛡️'], 1)[0],
       prize: pool[0] || '🏆',
-      rigAfterMisses: 1,
+      attempts: 1,
     },
   }),
 
+  // 🗂️ Sort It: 5 items, Zero Mistakes Allowed
   sort_bucket: (r, _pool, i) => {
     const setIdx = (i + Math.floor(r() * SORT_SETS.length)) % SORT_SETS.length;
     return {
-      q: '🗂️ Sort It: Tap to drop each item in the right bucket!',
-      gameData: { ...SORT_SETS[setIdx], mistakes: 2 },
+      q: '🗂️ Sort It: Classify 5 items! (Zero Mistakes Allowed)',
+      gameData: { ...SORT_SETS[setIdx], mistakes: 1, attempts: 1 },
     };
   },
 
+  // 🔢 Pattern Ninja: Multi-step pattern, 4 options, 1 Guess Only
   pattern_quiz: (r, pool) => {
     const [a, b, c] = sample(r, pool, 3);
     const patternType = Math.floor(r() * 3);
@@ -1124,16 +1134,17 @@ const GAME_BUILDERS = {
     const options = sample(r, Array.from(optionSet).slice(0, 4), 4);
 
     return {
-      q: `🔢 Pattern Ninja: ${pattern.join(' ')} → ?`,
-      gameData: { pattern, options, answer },
+      q: `🔢 Logic Pattern: ${pattern.join(' ')} → ? (1 Guess Only)`,
+      gameData: { pattern, options, answer, attempts: 1 },
     };
   },
 
+  // 🎤 Crowd Judge: 6-second physical summit challenge with single vote
   crowd_judge: (r, _pool, i) => {
     const c = CROWD_CHALLENGES[(i + Math.floor(r() * CROWD_CHALLENGES.length)) % CROWD_CHALLENGES.length];
     return {
       q: `🎤 Crowd Challenge: ${c.challenge}`,
-      gameData: { ...c, durationSec: 8 },
+      gameData: { ...c, durationSec: 6, attempts: 1 },
     };
   },
 };

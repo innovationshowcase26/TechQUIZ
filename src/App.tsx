@@ -566,7 +566,7 @@ export default function App() {
           isPassportActive={stage === 'PASSPORT'}
         />
       )}
-      <Layout wide={stage === 'WELCOME' && !loadError} showBanner={stage === 'WELCOME'}>
+      <Layout wide={stage === 'WELCOME' && !loadError} showBanner={false}>
         {loadError && (
           <div className="ts-page">
             <div className="ts-page__container">

@@ -23,11 +23,11 @@ export function Results({
 
   let rankText = 'Summit Competitor';
   if (result.percentage >= 80 && result.timeTakenSeconds <= 45) {
-    rankText = 'Top 5% • Master Architect';
+    rankText = 'Master Architect';
   } else if (result.percentage >= 80) {
-    rankText = 'Top 15% • Lead Engineer';
+    rankText = 'Lead Engineer';
   } else if (result.percentage >= 60) {
-    rankText = 'Top 35% • Senior Practitioner';
+    rankText = 'Senior Practitioner';
   }
 
   return (
@@ -50,14 +50,15 @@ export function Results({
               width: '56px',
               height: '56px',
               borderRadius: '50%',
-              background: 'var(--app-primary-light)',
+              background: 'var(--app-primary-light, #EFF6FF)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--app-primary)',
+              color: 'var(--app-primary, #2563EB)',
             }}
+            aria-hidden="true"
           >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
               <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
               <path d="M4 22h16" />
@@ -84,23 +85,58 @@ export function Results({
           {/* 2x2 Metric Grid */}
           <div className="app-metrics-grid" style={{ width: '100%', marginTop: '6px' }}>
             <div className="app-metric-tile">
-              <span className="app-metric-value">{result.score} / {result.totalQuestions}</span>
-              <span className="app-metric-label">Points (1 pt/question)</span>
+              <div className="app-metric-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              </div>
+              <div className="app-metric-info">
+                <span className="app-metric-value">{result.score} / {result.totalQuestions}</span>
+                <span className="app-metric-label">Points Earned</span>
+              </div>
             </div>
 
             <div className="app-metric-tile">
-              <span className="app-metric-value">{result.percentage}%</span>
-              <span className="app-metric-label">Accuracy Rate</span>
+              <div className="app-metric-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <circle cx="12" cy="12" r="6" />
+                  <circle cx="12" cy="12" r="2" />
+                </svg>
+              </div>
+              <div className="app-metric-info">
+                <span className="app-metric-value">{result.percentage}%</span>
+                <span className="app-metric-label">Accuracy Rate</span>
+              </div>
             </div>
 
             <div className="app-metric-tile">
-              <span className="app-metric-value">{result.timeTakenSeconds}s</span>
-              <span className="app-metric-label">Time Taken</span>
+              <div className="app-metric-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="14" r="8" />
+                  <line x1="12" y1="2" x2="12" y2="6" />
+                  <line x1="12" y1="14" x2="15" y2="11" />
+                </svg>
+              </div>
+              <div className="app-metric-info">
+                <span className="app-metric-value">{result.timeTakenSeconds}s</span>
+                <span className="app-metric-label">Time Taken</span>
+              </div>
             </div>
 
             <div className="app-metric-tile">
-              <span className="app-metric-value" style={{ fontSize: '14px' }}>{rankText}</span>
-              <span className="app-metric-label">Summit Standing</span>
+              <div className="app-metric-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                  <path d="M4 22h16" />
+                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                </svg>
+              </div>
+              <div className="app-metric-info">
+                <span className="app-metric-value" style={{ fontSize: '15px' }}>{rankText}</span>
+                <span className="app-metric-label">Standing</span>
+              </div>
             </div>
           </div>
 

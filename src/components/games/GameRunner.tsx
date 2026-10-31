@@ -4,6 +4,7 @@ import { playZapSound, playFailBuzz, playSuccessChime } from '../../utils/qrHelp
 
 // ═══════════════════════════════════════════
 // GAME RUNNER — Central router for all games
+// Strictly 1-chance rules, zero retries
 // ═══════════════════════════════════════════
 
 interface GameRunnerProps {
@@ -20,16 +21,21 @@ export function GameRunner({ question, onDone }: GameRunnerProps) {
     setResult(won ? 'won' : 'lost');
     if (won) playSuccessChime();
     else playFailBuzz();
-    setTimeout(() => onDone(won), 1400);
+    onDone(won);
   }, [result, onDone]);
 
   if (result !== 'playing') {
-    const msg = result === 'won' ? (d?.winMsg || '🎉 Amazing!') : (d?.loseMsg || 'Even robots miss sometimes 🤖');
+    const msg = result === 'won'
+      ? (d?.winMsg || 'Challenge Completed! 🎉')
+      : (d?.loseMsg || 'Challenge Attempt Finished 🤖');
     return (
       <div className="emoji-game-result">
         <div className={`emoji-game-result__card ${result === 'won' ? 'emoji-game-result__card--won' : 'emoji-game-result__card--lost'}`}>
-          <span className="emoji-game-result__icon">{result === 'won' ? '🎉' : '😅'}</span>
+          <span className="emoji-game-result__icon">{result === 'won' ? '🎉' : '❌'}</span>
           <p className="emoji-game-result__msg">{msg}</p>
+          <div style={{ marginTop: '8px', fontSize: '13px', fontWeight: 800, color: result === 'won' ? '#16a34a' : '#dc2626' }}>
+            {result === 'won' ? '✓ Challenge Completed (+1 Point)' : 'Challenge Failed (0 Points)'}
+          </div>
         </div>
       </div>
     );
@@ -52,18 +58,20 @@ export function GameRunner({ question, onDone }: GameRunnerProps) {
 
 
 // ═══════════════════════════════════════════
-// 🧠 MEMORY MISSING
+// 🧠 1. MEMORY MISSING (Complex: 8 items, 6 options, 1 Guess)
 // ═══════════════════════════════════════════
 function MemoryMissing({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
   const [phase, setPhase] = useState<'show' | 'ask'>('show');
-  const [tries, setTries] = useState(d.attempts || 2);
-  const [shake, setShake] = useState(false);
-  const [wrongChoices, setWrongChoices] = useState<string[]>([]);
+  const [picked, setPicked] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+
+  const shownList: string[] = d.shown || ['🚀', '🤖', '⚡', '💻', '🔒', '🛡️', '📦', '🎯'];
+  const missingItem: string = d.missing || shownList[0];
+  const optionsList: string[] = d.options || shownList.slice(0, 6);
 
   useEffect(() => {
     if (phase === 'show') {
-      const t = setTimeout(() => setPhase('ask'), d.showMs || 2800);
+      const t = setTimeout(() => setPhase('ask'), d.showMs || 2500);
       return () => clearTimeout(t);
     }
   }, [phase, d.showMs]);
@@ -72,58 +80,42 @@ function MemoryMissing({ d, onDone }: { d: any; onDone: (won: boolean) => void }
     return (
       <div className="emoji-game emoji-game--memory">
         <div className="emoji-game__instruction">
-          <span className="emoji-game__pulse">👁️</span> Memorise these emojis…
+          <span className="emoji-game__pulse">👁️</span> Memorise all 8 emojis… (One will vanish!)
         </div>
-        <div className="emoji-grid emoji-grid--3col">
-          {(d.shown as string[]).map((e: string, i: number) => (
+        <div className="emoji-grid emoji-grid--4col">
+          {shownList.map((e: string, i: number) => (
             <div key={i} className="emoji-cell emoji-cell--glow">{e}</div>
           ))}
         </div>
-        <div className="emoji-game__timer-bar" style={{ animationDuration: `${(d.showMs || 2800) / 1000}s` }} />
+        <div className="emoji-game__timer-bar" style={{ animationDuration: `${(d.showMs || 2500) / 1000}s` }} />
       </div>
     );
   }
 
-  const remaining = (d.shown as string[]).filter((e: string) => e !== d.missing);
+  const remaining = shownList.filter((e: string) => e !== missingItem);
 
   const pick = (e: string) => {
-    if (wrongChoices.includes(e) || tries <= 0) return;
+    if (picked !== null) return;
+    setPicked(e);
 
-    if (e === d.missing) {
+    if (e === missingItem) {
       playZapSound();
-      setFeedback('🎉 You spotted it!');
+      setFeedback('🎉 Bullseye! You spotted the vanished emoji!');
       setTimeout(() => onDone(true), 600);
-      return;
-    }
-
-    playFailBuzz();
-    setShake(true);
-    setTimeout(() => setShake(false), 500);
-
-    const remainingTries = tries - 1;
-    setTries(remainingTries);
-    setWrongChoices(prev => [...prev, e]);
-
-    if (remainingTries > 0) {
-      setFeedback('❌ Not that one! (1 try left)');
     } else {
-      setFeedback('❌ No tries left!');
+      playFailBuzz();
+      setFeedback(`❌ Wrong! The vanished emoji was ${missingItem}`);
       setTimeout(() => onDone(false), 800);
     }
   };
 
-  const handleReview = () => {
-    setFeedback(null);
-    setPhase('show');
-  };
-
   return (
-    <div className={`emoji-game emoji-game--memory ${shake ? 'emoji-game--shake' : ''}`}>
+    <div className="emoji-game emoji-game--memory">
       <div className="emoji-game__instruction">
-        Which emoji vanished? <span className="emoji-game__tries">({tries} {tries === 1 ? 'try' : 'tries'} left)</span>
+        Which emoji vanished? <span className="emoji-game__tries" style={{ color: '#DC2626', fontWeight: 800 }}>(1 Guess Only)</span>
       </div>
       <div className="emoji-game__remaining">
-        {remaining.slice(0, 5).map((e: string, i: number) => (
+        {remaining.map((e: string, i: number) => (
           <span key={i} className="emoji-cell emoji-cell--small">{e}</span>
         ))}
         <span className="emoji-cell emoji-cell--missing">❓</span>
@@ -135,21 +127,17 @@ function MemoryMissing({ d, onDone }: { d: any; onDone: (won: boolean) => void }
         </div>
       )}
 
-      {tries === 1 && wrongChoices.length > 0 && (
-        <button className="emoji-btn emoji-btn--review" onClick={handleReview}>
-          👁️ Quick Peek (Watch Again)
-        </button>
-      )}
-
       <div className="emoji-game__options">
-        {(d.options as string[]).map((e: string, i: number) => {
-          const isWrong = wrongChoices.includes(e);
+        {optionsList.map((e: string, i: number) => {
+          const isSelected = picked === e;
+          const isCorrect = isSelected && e === missingItem;
+          const isWrong = isSelected && e !== missingItem;
           return (
             <button
               key={i}
-              className={`emoji-btn emoji-btn--choice ${isWrong ? 'emoji-btn--choice-wrong' : ''}`}
+              className={`emoji-btn emoji-btn--choice ${isWrong ? 'emoji-btn--choice-wrong' : ''} ${isCorrect ? 'emoji-btn--choice-correct' : ''}`}
               onClick={() => pick(e)}
-              disabled={isWrong || tries <= 0}
+              disabled={picked !== null}
             >
               {isWrong ? '❌' : e}
             </button>
@@ -162,69 +150,94 @@ function MemoryMissing({ d, onDone }: { d: any; onDone: (won: boolean) => void }
 
 
 // ═══════════════════════════════════════════
-// 🎯 GRID TAP
+// 🎯 2. GRID TAP (Complex: 4x4 16 tiles, need 6 targets in 10s, 1 life)
 // ═══════════════════════════════════════════
 function GridTap({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
   const [score, setScore] = useState<number>(0);
-  const [lives, setLives] = useState<number>(d.lives || 3);
+  const [timeLeft, setTimeLeft] = useState<number>(d.durationSec || 10);
   const [cells, setCells] = useState<string[]>([]);
   const [flash, setFlash] = useState<number | null>(null);
+  const [gameOver, setGameOver] = useState(false);
   const intervalRef = useRef<any>(null);
-  const goal = d.goal || 5;
+  const timerRef = useRef<any>(null);
+  const goal = d.goal || 6;
+  const target = d.target || '🎯';
+  const decoy = d.decoy || '💣';
 
   const generateGrid = useCallback(() => {
     const grid: string[] = [];
-    for (let i = 0; i < (d.size || 9); i++) {
-      grid.push(Math.random() < 0.6 ? d.target : d.decoy);
+    for (let i = 0; i < 16; i++) {
+      grid.push(Math.random() < 0.45 ? target : decoy);
     }
-    // Ensure at least 2 targets
-    if (!grid.includes(d.target)) {
-      grid[0] = d.target;
-      grid[Math.floor(Math.random() * grid.length)] = d.target;
+    // Ensure at least 3 targets
+    let targetCount = grid.filter(g => g === target).length;
+    while (targetCount < 3) {
+      const idx = Math.floor(Math.random() * 16);
+      if (grid[idx] !== target) {
+        grid[idx] = target;
+        targetCount++;
+      }
     }
     setCells(grid);
-  }, [d.target, d.decoy, d.size]);
+  }, [target, decoy]);
 
   useEffect(() => {
     generateGrid();
-    intervalRef.current = setInterval(generateGrid, 2000);
+    intervalRef.current = setInterval(generateGrid, 1200);
     return () => clearInterval(intervalRef.current);
   }, [generateGrid]);
 
+  // 10s Countdown
   useEffect(() => {
-    if (score >= goal) {
+    timerRef.current = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(timerRef.current);
+          clearInterval(intervalRef.current);
+          setGameOver(true);
+          onDone(false);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [onDone]);
+
+  useEffect(() => {
+    if (score >= goal && !gameOver) {
+      setGameOver(true);
       clearInterval(intervalRef.current);
+      clearInterval(timerRef.current);
       onDone(true);
     }
-  }, [score, goal, onDone]);
-
-  useEffect(() => {
-    if (lives <= 0) {
-      clearInterval(intervalRef.current);
-      onDone(false);
-    }
-  }, [lives, onDone]);
+  }, [score, goal, gameOver, onDone]);
 
   const handleTap = (idx: number) => {
-    if (cells[idx] === '💥' || cells[idx] === '💨') return;
+    if (gameOver || cells[idx] === '💥' || cells[idx] === '💨') return;
     setFlash(idx);
-    setTimeout(() => setFlash(null), 300);
-    if (cells[idx] === d.target) {
+    setTimeout(() => setFlash(null), 250);
+
+    if (cells[idx] === target) {
       playZapSound();
-      setScore((s: number) => s + 1);
+      setScore(s => s + 1);
       setCells(prev => {
         const next = [...prev];
         next[idx] = '💥';
         return next;
       });
     } else {
+      // Tapped decoy — instant fail!
       playFailBuzz();
-      setLives((l: number) => l - 1);
+      setGameOver(true);
+      clearInterval(intervalRef.current);
+      clearInterval(timerRef.current);
       setCells(prev => {
         const next = [...prev];
-        next[idx] = '💨';
+        next[idx] = '💥';
         return next;
       });
+      setTimeout(() => onDone(false), 500);
     }
   };
 
@@ -232,18 +245,19 @@ function GridTap({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
     <div className="emoji-game emoji-game--grid">
       <div className="emoji-game__hud">
         <span>🎯 {score}/{goal}</span>
-        <span>{'❤️'.repeat(Math.max(0, lives))}</span>
+        <span style={{ color: timeLeft <= 3 ? '#DC2626' : '#2563EB', fontWeight: 800 }}>⏱️ {timeLeft}s</span>
+        <span style={{ color: '#DC2626', fontWeight: 800 }}>1 Life (Zero Errors)</span>
       </div>
       <div className="emoji-game__instruction">
-        Tap <span className="emoji-game__highlight">{d.target}</span> avoid <span className="emoji-game__danger">{d.decoy}</span>
+        Tap <span className="emoji-game__highlight">{target}</span> — Avoid <span className="emoji-game__danger">{decoy}</span>!
       </div>
-      <div className="emoji-grid emoji-grid--3col">
+      <div className="emoji-grid emoji-grid--4col">
         {cells.map((emoji, idx) => (
           <button
             key={idx}
             className={`emoji-cell emoji-cell--tappable ${flash === idx ? 'emoji-cell--flash' : ''}`}
             onClick={() => handleTap(idx)}
-            disabled={emoji === '💥' || emoji === '💨'}
+            disabled={gameOver || emoji === '💥' || emoji === '💨'}
           >
             {emoji}
           </button>
@@ -255,48 +269,46 @@ function GridTap({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
 
 
 // ═══════════════════════════════════════════
-// 🔍 ODD ONE
+// 🔍 3. ODD ONE (Complex: 4x4 16 tiles, lookalikes, 1 Tap Only)
 // ═══════════════════════════════════════════
 function OddOne({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
-  const [tries, setTries] = useState(d.attempts || 2);
-  const [shake, setShake] = useState(false);
-  const [missedCells, setMissedCells] = useState<number[]>([]);
-  const cellCount = d.cells || 12;
+  const [tapped, setTapped] = useState<number | null>(null);
+  const cellCount = d.cells || 16;
+  const oddIndex = d.oddIndex ?? Math.floor(Math.random() * cellCount);
 
   const tap = (i: number) => {
-    if (missedCells.includes(i)) return;
-    if (i === d.oddIndex) {
+    if (tapped !== null) return;
+    setTapped(i);
+
+    if (i === oddIndex) {
       playZapSound();
-      return onDone(true);
-    }
-    playFailBuzz();
-    setShake(true);
-    setMissedCells(prev => [...prev, i]);
-    setTimeout(() => setShake(false), 500);
-    if (tries - 1 > 0) {
-      setTries(tries - 1);
+      setTimeout(() => onDone(true), 500);
     } else {
-      onDone(false);
+      playFailBuzz();
+      setTimeout(() => onDone(false), 700);
     }
   };
 
   return (
-    <div className={`emoji-game emoji-game--odd ${shake ? 'emoji-game--shake' : ''}`}>
+    <div className="emoji-game emoji-game--odd">
       <div className="emoji-game__instruction">
-        🔍 Find the odd one out! <span className="emoji-game__tries">({tries} {tries === 1 ? 'try' : 'tries'} left)</span>
+        🔍 Find the subtle impostor! <span className="emoji-game__tries" style={{ color: '#DC2626', fontWeight: 800 }}>(1 Tap Only)</span>
       </div>
       <div className="emoji-grid emoji-grid--4col">
-        {Array.from({ length: cellCount }, (_, i) => (
-          <button
-            key={i}
-            className={`emoji-cell emoji-cell--tappable ${missedCells.includes(i) ? 'emoji-cell--missed' : ''}`}
-            onClick={() => tap(i)}
-            disabled={missedCells.includes(i)}
-            style={missedCells.includes(i) ? { opacity: 0.3, transform: 'scale(0.85)' } : undefined}
-          >
-            {missedCells.includes(i) ? '❌' : (i === d.oddIndex ? d.odd : d.base)}
-          </button>
-        ))}
+        {Array.from({ length: cellCount }, (_, i) => {
+          const isTapped = tapped === i;
+          const isOdd = i === oddIndex;
+          return (
+            <button
+              key={i}
+              className={`emoji-cell emoji-cell--tappable ${isTapped && isOdd ? 'emoji-cell--prize-won' : ''} ${isTapped && !isOdd ? 'emoji-cell--missed' : ''}`}
+              onClick={() => tap(i)}
+              disabled={tapped !== null}
+            >
+              {isTapped && !isOdd ? '❌' : (i === oddIndex ? d.odd : d.base)}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -304,24 +316,22 @@ function OddOne({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
 
 
 // ═══════════════════════════════════════════
-// 🃏 PAIR MATCH
+// 🃏 4. PAIR MATCH (Complex: 6 cards / 3 pairs, 1.8s peek, Zero Errors)
 // ═══════════════════════════════════════════
 function PairMatch({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
-  const faces: string[] = d.faces || ['🐶', '🐱', '🐼'];
-  // Create pairs from first 2 faces
-  const pairEmojis = [faces[0], faces[0], faces[1], faces[1]];
+  const faces: string[] = d.faces && d.faces.length >= 3 ? d.faces.slice(0, 3) : ['🤖', '⚡', '🚀'];
+  const pairEmojis = [faces[0], faces[0], faces[1], faces[1], faces[2], faces[2]];
   const [cards] = useState(() => {
     const shuffled = [...pairEmojis].sort(() => Math.random() - 0.5);
-    return shuffled.map((emoji, i) => ({ id: i, emoji, flipped: true }));
+    return shuffled.map((emoji, i) => ({ id: i, emoji }));
   });
   const [phase, setPhase] = useState<'peek' | 'play'>('peek');
   const [flipped, setFlipped] = useState<number[]>([]);
   const [matched, setMatched] = useState<number[]>([]);
-  const [tries, setTries] = useState(d.attempts || 2);
   const lockRef = useRef(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setPhase('play'), d.peekMs || 2000);
+    const t = setTimeout(() => setPhase('play'), d.peekMs || 1800);
     return () => clearTimeout(t);
   }, [d.peekMs]);
 
@@ -346,13 +356,11 @@ function PairMatch({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
         setFlipped([]);
         lockRef.current = false;
       } else {
+        // Zero mistake rule: 1 mismatch = fail!
         playFailBuzz();
         setTimeout(() => {
-          setFlipped([]);
-          lockRef.current = false;
-          if (tries - 1 <= 0) onDone(false);
-          else setTries(tries - 1);
-        }, 800);
+          onDone(false);
+        }, 700);
       }
     }
   };
@@ -362,14 +370,17 @@ function PairMatch({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
   return (
     <div className="emoji-game emoji-game--pairs">
       <div className="emoji-game__instruction">
-        {phase === 'peek' ? '👁️ Memorise the cards…' : `🃏 Find the pairs! (${tries} ${tries === 1 ? 'miss' : 'misses'} left)`}
+        {phase === 'peek'
+          ? '👁️ Memorise all 3 pairs…'
+          : '🃏 Match all 3 pairs! (Zero Mismatches Allowed)'}
       </div>
-      <div className="emoji-grid emoji-grid--2col">
+      <div className="emoji-grid emoji-grid--3col">
         {cards.map((card, idx) => (
           <button
             key={card.id}
             className={`emoji-cell emoji-cell--card ${isVisible(idx) ? 'emoji-cell--card-up' : 'emoji-cell--card-down'} ${matched.includes(idx) ? 'emoji-cell--matched' : ''}`}
             onClick={() => handleFlip(idx)}
+            disabled={phase !== 'play' || isVisible(idx)}
           >
             {isVisible(idx) ? card.emoji : '❓'}
           </button>
@@ -381,11 +392,11 @@ function PairMatch({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
 
 
 // ═══════════════════════════════════════════
-// 🎨 SEQUENCE (Simon-style)
+// 🎨 5. SEQUENCE (Complex: 5-step Simon sequence, 1 Attempt)
 // ═══════════════════════════════════════════
 function Sequence({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
-  const colors: string[] = d.colors || ['🔴', '🔵', '🟢', '🟡'];
-  const seqLength = d.length || 3;
+  const colors: string[] = d.colors || ['🔥', '⚡', '💧', '🌿'];
+  const seqLength = d.length || 5;
   const [seq] = useState(() => {
     const s: number[] = [];
     for (let i = 0; i < seqLength; i++) {
@@ -396,14 +407,12 @@ function Sequence({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
   const [phase, setPhase] = useState<'show' | 'play'>('show');
   const [showIdx, setShowIdx] = useState(0);
   const [playerSeq, setPlayerSeq] = useState<number[]>([]);
-  const [tries, setTries] = useState(d.attempts || 2);
   const [activeBtn, setActiveBtn] = useState<number | null>(null);
 
-  // Show sequence one by one
   useEffect(() => {
     if (phase !== 'show') return;
     if (showIdx >= seqLength) {
-      setTimeout(() => setPhase('play'), 500);
+      setTimeout(() => setPhase('play'), 400);
       return;
     }
     const t = setTimeout(() => {
@@ -411,14 +420,15 @@ function Sequence({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
       setTimeout(() => {
         setActiveBtn(null);
         setShowIdx(showIdx + 1);
-      }, 400);
-    }, 600);
+      }, 350);
+    }, 500);
     return () => clearTimeout(t);
   }, [phase, showIdx, seq, seqLength]);
 
   const handleTap = (colorIdx: number) => {
     if (phase !== 'play') return;
     const nextIdx = playerSeq.length;
+
     if (colorIdx === seq[nextIdx]) {
       playZapSound();
       const newSeq = [...playerSeq, colorIdx];
@@ -427,15 +437,9 @@ function Sequence({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
         onDone(true);
       }
     } else {
+      // 1 mistake = immediate fail!
       playFailBuzz();
-      if (tries - 1 > 0) {
-        setTries(tries - 1);
-        setPlayerSeq([]);
-        setShowIdx(0);
-        setPhase('show');
-      } else {
-        onDone(false);
-      }
+      onDone(false);
     }
   };
 
@@ -443,9 +447,8 @@ function Sequence({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
     <div className="emoji-game emoji-game--sequence">
       <div className="emoji-game__instruction">
         {phase === 'show'
-          ? '👁️ Watch the sequence…'
-          : `🎨 Now repeat it! (${tries} ${tries === 1 ? 'try' : 'tries'} left)`
-        }
+          ? `👁️ Watch the 5-step sequence… (${showIdx}/${seqLength})`
+          : '🎨 Repeat all 5 steps! (1 Mistake = Fail)'}
       </div>
       <div className="emoji-game__progress">
         {seq.map((_, i) => (
@@ -470,24 +473,22 @@ function Sequence({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
 
 
 // ═══════════════════════════════════════════
-// ⏱️ TIMER STOP
+// ⏱️ 6. TIMER STOP (Complex: Fast 1.65x, Narrow 14% zone, Strictly 1 Hit)
 // ═══════════════════════════════════════════
 function TimerStop({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
   const [position, setPosition] = useState(0);
   const [running, setRunning] = useState(true);
-  const [tries, setTries] = useState(d.attempts || 2);
   const [stoppedState, setStoppedState] = useState<'playing' | 'missed' | 'won'>('playing');
   const animRef = useRef<any>(null);
   const startRef = useRef(Date.now());
-  const speed = d.speed || 1.2;
-  const zoneStart = d.zoneStart || 30;
-  const zoneEnd = d.zoneEnd || 60;
+  const speed = d.speed || 1.65;
+  const zoneStart = d.zoneStart || 43;
+  const zoneEnd = d.zoneEnd || 57;
 
   useEffect(() => {
     if (!running) return;
     const tick = () => {
       const elapsed = (Date.now() - startRef.current) / 1000;
-      // Oscillate 0-100 using sine wave
       const pos = (Math.sin(elapsed * speed * Math.PI) * 0.5 + 0.5) * 100;
       setPosition(pos);
       animRef.current = requestAnimationFrame(tick);
@@ -500,36 +501,22 @@ function TimerStop({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
     if (!running) return;
     setRunning(false);
     cancelAnimationFrame(animRef.current);
-    
+
     if (position >= zoneStart && position <= zoneEnd) {
       setStoppedState('won');
       playZapSound();
       setTimeout(() => onDone(true), 600);
     } else {
+      setStoppedState('missed');
       playFailBuzz();
-      const remainingTries = tries - 1;
-      setTries(remainingTries);
-      if (remainingTries > 0) {
-        setStoppedState('missed');
-      } else {
-        setStoppedState('missed');
-        setTimeout(() => onDone(false), 900);
-      }
+      setTimeout(() => onDone(false), 800);
     }
-  };
-
-  const handleRetry = () => {
-    startRef.current = Date.now();
-    setPosition(0);
-    setStoppedState('playing');
-    setRunning(true);
   };
 
   return (
     <div className="emoji-game emoji-game--timer">
       <div className="emoji-game__instruction">
-        ⏱️ Tap STOP when the slider is in the <span className="emoji-game__highlight" style={{ color: '#16a34a' }}>green zone</span>!
-        <span className="emoji-game__tries">({tries} {tries === 1 ? 'try' : 'tries'} left)</span>
+        ⏱️ Hit STOP inside the <span className="emoji-game__highlight" style={{ color: '#16a34a' }}>green zone</span>! <span style={{ color: '#DC2626', fontWeight: 800 }}>(1 Shot Only)</span>
       </div>
       <div className="emoji-timer-bar">
         <div className="emoji-timer-bar__track">
@@ -544,14 +531,9 @@ function TimerStop({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
         </div>
       </div>
 
-      {stoppedState === 'missed' && tries > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', width: '100%', marginTop: '6px' }}>
-          <div className="emoji-game__feedback emoji-game__feedback--miss">
-            ❌ Missed the green zone! 1 try remaining.
-          </div>
-          <button className="emoji-btn emoji-btn--retry-play" onClick={handleRetry}>
-            🔄 Try Again (1 Try Left)
-          </button>
+      {stoppedState === 'missed' ? (
+        <div className="emoji-game__feedback emoji-game__feedback--miss">
+          ❌ Missed the target zone!
         </div>
       ) : stoppedState === 'won' ? (
         <div className="emoji-game__feedback emoji-game__feedback--hit">
@@ -568,61 +550,53 @@ function TimerStop({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
 
 
 // ═══════════════════════════════════════════
-// 🎁 LUCK PICK
+// 🎁 7. LUCK PICK (Complex: 4 vaults, Strictly 1 Choice)
 // ═══════════════════════════════════════════
 function LuckPick({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
-  const slots = d.slots || 3;
-  const icon = d.icon || '🎁';
+  const slots = d.slots || 4;
+  const icon = d.icon || '🔒';
   const [prizeSlot] = useState(() => Math.floor(Math.random() * slots));
   const [picked, setPicked] = useState<number | null>(null);
-  const [revealed, setRevealed] = useState(false);
-  const [misses, setMisses] = useState(0);
-  const rigAfterMisses = d.rigAfterMisses ?? 1;
 
   const handlePick = (idx: number) => {
-    if (revealed) return;
+    if (picked !== null) return;
     setPicked(idx);
-    setRevealed(true);
 
-    // Gently rigged: after X misses, next pick always wins
-    const isWinner = idx === prizeSlot || misses >= rigAfterMisses;
-
+    const isWinner = idx === prizeSlot;
     if (isWinner) {
       playZapSound();
-      setTimeout(() => onDone(true), 800);
+      setTimeout(() => onDone(true), 700);
     } else {
       playFailBuzz();
-      setMisses(m => m + 1);
-      setTimeout(() => {
-        setRevealed(false);
-        setPicked(null);
-      }, 1200);
+      setTimeout(() => onDone(false), 900);
     }
   };
 
   return (
     <div className="emoji-game emoji-game--luck">
       <div className="emoji-game__instruction">
-        🎁 One of these hides a prize! Tap to reveal!
+        🎁 Pick the winning vault! <span style={{ color: '#DC2626', fontWeight: 800 }}>(1 Choice Only)</span>
       </div>
-      <div className="emoji-grid emoji-grid--luck">
+      <div className="emoji-grid emoji-grid--4col">
         {Array.from({ length: slots }, (_, i) => {
-          const isThisSlot = picked === i && revealed;
-          const isWinner = i === prizeSlot || (picked === i && misses >= rigAfterMisses);
+          const isThisSlot = picked === i;
+          const isWinner = i === prizeSlot;
           return (
             <button
               key={i}
               className={`emoji-cell emoji-cell--luck ${isThisSlot ? (isWinner ? 'emoji-cell--prize-won' : 'emoji-cell--prize-empty') : ''}`}
               onClick={() => handlePick(i)}
-              disabled={revealed}
+              disabled={picked !== null}
             >
-              {isThisSlot ? (isWinner ? `🏆${d.prize || '🎉'}` : '💨') : icon}
+              {isThisSlot ? (isWinner ? `🏆` : '💨') : icon}
             </button>
           );
         })}
       </div>
-      {revealed && picked !== null && (picked === prizeSlot || misses >= rigAfterMisses) && (
-        <div className="emoji-game__celebration">🎉 You found the prize!</div>
+      {picked !== null && (
+        <div className={`emoji-game__feedback ${picked === prizeSlot ? 'emoji-game__feedback--hit' : 'emoji-game__feedback--miss'}`}>
+          {picked === prizeSlot ? '🎉 Vault unlocked! You found the prize!' : '💨 Empty vault! Challenge failed.'}
+        </div>
       )}
     </div>
   );
@@ -630,13 +604,11 @@ function LuckPick({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
 
 
 // ═══════════════════════════════════════════
-// 🗂️ SORT BUCKET
+// 🗂️ 8. SORT BUCKET (Complex: 5 items, Zero Mistakes Allowed)
 // ═══════════════════════════════════════════
 function SortBucket({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
-  const [items] = useState(() => [...(d.items as [string, number][])].sort(() => Math.random() - 0.5));
+  const [items] = useState(() => [...(d.items as [string, number][])].slice(0, 5).sort(() => Math.random() - 0.5));
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [mistakes, setMistakes] = useState(0);
-  const maxMistakes = d.mistakes || 2;
   const [sorted, setSorted] = useState(0);
   const [lastResult, setLastResult] = useState<'correct' | 'wrong' | null>(null);
   const [locked, setLocked] = useState(false);
@@ -658,21 +630,15 @@ function SortBucket({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
           setCurrentIdx(nextIdx);
           setLastResult(null);
           setLocked(false);
-        }, 500);
+        }, 400);
       }
     } else {
+      // 1 mistake = immediate fail!
       playFailBuzz();
       setLastResult('wrong');
-      const newMistakes = mistakes + 1;
-      setMistakes(newMistakes);
-      if (newMistakes >= maxMistakes) {
+      setTimeout(() => {
         onDone(false);
-      } else {
-        setTimeout(() => {
-          setLastResult(null);
-          setLocked(false);
-        }, 600);
-      }
+      }, 700);
     }
   };
 
@@ -681,13 +647,13 @@ function SortBucket({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
   return (
     <div className="emoji-game emoji-game--sort">
       <div className="emoji-game__hud">
-        <span>✅ {sorted}/{items.length}</span>
-        <span>❌ {mistakes}/{maxMistakes}</span>
+        <span>✅ Sorted: {sorted}/{items.length}</span>
+        <span style={{ color: '#DC2626', fontWeight: 800 }}>1 Error = Fail</span>
       </div>
       {currentItem && (
         <div className={`emoji-game__sort-item ${lastResult === 'correct' ? 'emoji-game__sort-item--correct' : ''} ${lastResult === 'wrong' ? 'emoji-game__sort-item--wrong' : ''}`}>
           <span className="emoji-game__sort-emoji">{currentItem[0]}</span>
-          <span className="emoji-game__sort-label">Where does this belong?</span>
+          <span className="emoji-game__sort-label">Which category does this belong to?</span>
         </div>
       )}
       <div className="emoji-game__buckets">
@@ -708,16 +674,15 @@ function SortBucket({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
 
 
 // ═══════════════════════════════════════════
-// 🔢 PATTERN QUIZ
+// 🔢 9. PATTERN QUIZ (Complex: Multi-step pattern, 1 Attempt)
 // ═══════════════════════════════════════════
 function PatternQuiz({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
-  const [shake, setShake] = useState(false);
-  const [tries, setTries] = useState(2);
-  const [disabledOptions, setDisabledOptions] = useState<string[]>([]);
+  const [picked, setPicked] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const handlePick = (option: string) => {
-    if (disabledOptions.includes(option) || tries <= 0) return;
+    if (picked !== null) return;
+    setPicked(option);
 
     if (option === d.answer) {
       playZapSound();
@@ -725,26 +690,15 @@ function PatternQuiz({ d, onDone }: { d: any; onDone: (won: boolean) => void }) 
       setTimeout(() => onDone(true), 600);
     } else {
       playFailBuzz();
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
-
-      const remaining = tries - 1;
-      setTries(remaining);
-      setDisabledOptions(prev => [...prev, option]);
-
-      if (remaining > 0) {
-        setFeedback('❌ Not quite! 1 try left — pick another emoji!');
-      } else {
-        setFeedback('❌ Out of tries!');
-        setTimeout(() => onDone(false), 800);
-      }
+      setFeedback(`❌ Incorrect! The correct answer was ${d.answer}`);
+      setTimeout(() => onDone(false), 800);
     }
   };
 
   return (
-    <div className={`emoji-game emoji-game--pattern ${shake ? 'emoji-game--shake' : ''}`}>
+    <div className="emoji-game emoji-game--pattern">
       <div className="emoji-game__instruction">
-        🔢 Complete the pattern! <span className="emoji-game__tries">({tries} {tries === 1 ? 'try' : 'tries'} left)</span>
+        🔢 Deduce the next item! <span style={{ color: '#DC2626', fontWeight: 800 }}>(1 Guess Only)</span>
       </div>
       <div className="emoji-game__pattern-display">
         {(d.pattern as string[]).map((p: string, i: number) => (
@@ -753,19 +707,20 @@ function PatternQuiz({ d, onDone }: { d: any; onDone: (won: boolean) => void }) 
         <span className="emoji-cell emoji-cell--pattern emoji-cell--missing">❓</span>
       </div>
       {feedback && (
-        <div className={`emoji-game__feedback ${tries === 0 ? 'emoji-game__feedback--miss' : 'emoji-game__feedback--retry'}`}>
+        <div className="emoji-game__feedback emoji-game__feedback--retry">
           {feedback}
         </div>
       )}
       <div className="emoji-game__options">
         {(d.options as string[]).map((opt: string, i: number) => {
-          const isWrong = disabledOptions.includes(opt);
+          const isWrong = picked === opt && opt !== d.answer;
+          const isCorrect = picked === opt && opt === d.answer;
           return (
             <button
               key={i}
-              className={`emoji-btn emoji-btn--choice ${isWrong ? 'emoji-btn--choice-wrong' : ''}`}
+              className={`emoji-btn emoji-btn--choice ${isWrong ? 'emoji-btn--choice-wrong' : ''} ${isCorrect ? 'emoji-btn--choice-correct' : ''}`}
               onClick={() => handlePick(opt)}
-              disabled={isWrong || tries <= 0}
+              disabled={picked !== null}
             >
               {isWrong ? '❌' : opt}
             </button>
@@ -778,10 +733,10 @@ function PatternQuiz({ d, onDone }: { d: any; onDone: (won: boolean) => void }) 
 
 
 // ═══════════════════════════════════════════
-// 🎤 CROWD JUDGE
+// 🎤 10. CROWD JUDGE (6-second physical summit challenge)
 // ═══════════════════════════════════════════
 function CrowdJudge({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
-  const [timer, setTimer] = useState<number>(d.durationSec || 8);
+  const [timer, setTimer] = useState<number>(d.durationSec || 6);
   const [started, setStarted] = useState(false);
   const [voted, setVoted] = useState(false);
 
@@ -819,17 +774,17 @@ function CrowdJudge({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
         <div className="emoji-game__countdown">
           <div className="emoji-game__countdown-number">{timer}</div>
           <div className="emoji-game__countdown-label">seconds remaining</div>
-          <div className="emoji-game__timer-bar" style={{ animationDuration: `${d.durationSec || 8}s` }} />
+          <div className="emoji-game__timer-bar" style={{ animationDuration: `${d.durationSec || 6}s` }} />
         </div>
       ) : (
         <div className="emoji-game__crowd-vote">
           <p className="emoji-game__vote-prompt">Did the crowd approve? 🎉</p>
           <div className="emoji-game__vote-buttons">
             <button className="emoji-btn emoji-btn--approve" onClick={() => handleVote(true)} disabled={voted}>
-              👏 Nailed It!
+              👏 Nailed It! (+1 Pt)
             </button>
             <button className="emoji-btn emoji-btn--retry" onClick={() => handleVote(false)} disabled={voted}>
-              😂 Almost!
+              😂 Almost! (0 Pts)
             </button>
           </div>
         </div>

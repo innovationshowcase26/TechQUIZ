@@ -497,249 +497,512 @@ body {
 }
 
 /* ==========================================================================
-   PASSPORT SCREEN STYLES (Matching Sample Screen Layout)
+/* ==========================================================================
+   PASSPORT & HOME SCREEN STYLES (Matching Reference Design System)
    ========================================================================== */
+
+/* Attendee Summit Pass Card */
 .app-passport-user-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: #FFFFFF;
-  border: 1px solid var(--app-border);
-  border-radius: 18px;
-  padding: 16px;
-  box-shadow: var(--app-shadow);
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  background: #FFFFFF !important;
+  border: 1px solid var(--app-border, #E2E8F0) !important;
+  border-radius: 18px !important;
+  padding: 16px 18px !important;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
+  box-sizing: border-box !important;
 }
 
 .app-user-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3B82F6, #1D4ED8);
-  color: #FFFFFF;
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 800;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 50% !important;
+  background: #2563EB !important;
+  color: #FFFFFF !important;
+  font-family: var(--font-display, "Space Grotesk") !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28) !important;
 }
 
 .app-user-meta {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  gap: 2px;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  gap: 2px !important;
 }
 
 .app-user-tag {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--app-primary);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: var(--app-primary, #2563EB) !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
 }
 
 .app-user-name {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--app-text-primary);
-  margin: 0;
+  font-family: var(--font-display, "Space Grotesk") !important;
+  font-size: 19px !important;
+  font-weight: 800 !important;
+  color: #0F172A !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .app-user-id {
-  font-size: 12px;
-  color: var(--app-text-muted);
+  font-size: 12.5px !important;
+  color: #64748B !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
-.app-status-badge {
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
+/* Yellow/Amber Goal Pill Badge (from Screenshot: 2/4 GOAL) */
+.app-goal-badge {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 8px 16px !important;
+  border-radius: 999px !important;
+  background: #FEF3C7 !important;
+  border: 1px solid rgba(217, 119, 6, 0.22) !important;
+  flex-shrink: 0 !important;
+  min-width: 70px !important;
+  box-sizing: border-box !important;
 }
 
-.app-status-badge--winner {
-  background: var(--app-success-light);
-  color: var(--app-success);
+.app-goal-badge__val {
+  font-family: var(--font-display, "Space Grotesk") !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #92400E !important;
+  line-height: 1.1 !important;
 }
 
-.app-status-badge--progress {
-  background: var(--app-warning-light);
-  color: var(--app-warning);
-}
-
-/* 2x2 Metric Grid (Matching Sample Image "Pending Issues") */
-.app-metrics-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  width: 100%;
-}
-
-.app-metric-tile {
-  display: flex;
-  flex-direction: column;
-  padding: 14px 16px;
-  border-radius: 14px;
-  background: #F8FAFC;
-  border: 1px solid var(--app-border);
-}
-
-.app-metric-value {
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--app-text-primary);
-  line-height: 1.1;
-}
-
-.app-metric-label {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--app-text-muted);
-  margin-top: 4px;
-}
-
-/* Card Section Header */
-.app-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.app-section-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.app-section-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: var(--app-primary-light);
-  color: var(--app-primary);
-}
-
-.app-section-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--app-text-primary);
-  margin: 0;
-}
-
-.app-section-link {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--app-primary);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-
-/* Booth List Rows (Matching Sample Screen "Latest Complaints") */
-.app-booth-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-}
-
-.app-booth-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: #F8FAFC;
-  border: 1px solid var(--app-border);
-  box-sizing: border-box;
-  text-decoration: none;
-  color: inherit;
-  transition: all 0.15s ease;
-}
-
-.app-booth-item--clickable {
-  cursor: pointer;
-}
-
-.app-booth-item--clickable:hover {
-  background: #FFFFFF;
-  border-color: var(--app-primary);
-  box-shadow: var(--app-shadow);
-}
-
-.app-booth-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-}
-
-.app-booth-number {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: var(--app-surface);
-  border: 1px solid var(--app-border);
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 14px;
-  color: var(--app-primary);
-  flex-shrink: 0;
-}
-
-.app-booth-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.app-booth-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--app-text-primary);
-  line-height: 1.25;
-}
-
-.app-booth-category {
-  font-size: 11.5px;
-  color: var(--app-text-muted);
-}
-
-.app-booth-status-pill {
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 11.5px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.app-booth-status-pill--done {
-  background: var(--app-success-light);
-  color: var(--app-success);
-}
-
-.app-booth-status-pill--action {
-  background: var(--app-primary);
-  color: #FFFFFF;
-  cursor: pointer;
+.app-goal-badge__lbl {
+  font-size: 10.5px !important;
+  font-weight: 800 !important;
+  color: #92400E !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  line-height: 1.1 !important;
+  margin-top: 2px !important;
 }
 
 /* ==========================================================================
-   BOTTOM NAVIGATION BAR (Matching Sample Screen Tab Bar)
+   CHALLENGE JOURNEY HERO CARD (Matching Reference Screenshot)
+   ========================================================================== */
+.app-challenge-journey-card {
+  display: flex !important;
+  flex-direction: column !important;
+  background: #FFFFFF !important;
+  border: 1px solid var(--app-border, #E2E8F0) !important;
+  border-radius: 18px !important;
+  padding: 18px 18px !important;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
+  gap: 14px !important;
+}
+
+.app-journey-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+.app-journey-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.app-journey-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #2563EB !important;
+  flex-shrink: 0 !important;
+}
+
+.app-journey-title {
+  font-family: var(--font-display, "Space Grotesk") !important;
+  font-size: 16.5px !important;
+  font-weight: 800 !important;
+  color: #0F172A !important;
+  margin: 0 !important;
+  line-height: 1.25 !important;
+}
+
+.app-journey-subtitle {
+  font-size: 13px !important;
+  color: #64748B !important;
+  margin-top: 2px !important;
+}
+
+.app-journey-motivation {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #1D4ED8 !important;
+  text-align: right !important;
+  max-width: 160px !important;
+  line-height: 1.3 !important;
+}
+
+.app-journey-star {
+  font-size: 15px !important;
+  flex-shrink: 0 !important;
+}
+
+.app-journey-progress-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  width: 100% !important;
+}
+
+.app-journey-progress-track {
+  flex: 1 !important;
+  height: 9px !important;
+  border-radius: 999px !important;
+  background: #E2E8F0 !important;
+  overflow: hidden !important;
+}
+
+.app-journey-progress-fill {
+  height: 100% !important;
+  border-radius: 999px !important;
+  background: #2563EB !important;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.app-journey-percent {
+  font-family: var(--font-display, "Space Grotesk") !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #1E3A8A !important;
+  min-width: 38px !important;
+  text-align: right !important;
+}
+
+/* ==========================================================================
+   2x2 METRICS GRID (Matching Reference Screenshot)
+   ========================================================================== */
+.app-metrics-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+.app-metric-tile {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 14px 16px !important;
+  border-radius: 16px !important;
+  background: #FFFFFF !important;
+  border: 1px solid var(--app-border, #E2E8F0) !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+  box-sizing: border-box !important;
+}
+
+.app-metric-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  color: #2563EB !important;
+  flex-shrink: 0 !important;
+}
+
+.app-metric-info {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+}
+
+.app-metric-value {
+  font-family: var(--font-display, "Space Grotesk") !important;
+  font-size: 21px !important;
+  font-weight: 800 !important;
+  color: #0F172A !important;
+  line-height: 1.15 !important;
+}
+
+.app-metric-label {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #64748B !important;
+  margin-top: 2px !important;
+  white-space: nowrap !important;
+}
+
+/* ==========================================================================
+   EXPLORE BOOTH CHALLENGES SECTION (Matching Reference Screenshot)
+   ========================================================================== */
+.app-booth-challenges-section {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+.app-section-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  padding: 4px 2px !important;
+}
+
+.app-section-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+}
+
+.app-section-grid-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #2563EB !important;
+}
+
+.app-section-title {
+  font-family: var(--font-display, "Space Grotesk") !important;
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  color: #0F172A !important;
+  margin: 0 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Light Blue Scan QR Pill Button */
+.app-scan-pill-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 14px !important;
+  border-radius: 10px !important;
+  background: #EFF6FF !important;
+  border: 1px solid rgba(37, 99, 235, 0.2) !important;
+  color: #2563EB !important;
+  font-family: var(--font-body, "Inter") !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.app-scan-pill-btn:hover {
+  background: #DBEAFE !important;
+  border-color: #2563EB !important;
+}
+
+.app-scan-pill-btn:active {
+  transform: scale(0.97) !important;
+}
+
+.app-header-scan-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 12px !important;
+  border-radius: 999px !important;
+  background: #EFF6FF !important;
+  border: 1px solid rgba(37, 99, 235, 0.25) !important;
+  color: #2563EB !important;
+  font-family: var(--font-body, "Inter") !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+
+/* Booth Cards List */
+.app-booth-cards-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+.app-booth-card {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 14px 16px !important;
+  border-radius: 16px !important;
+  background: #FFFFFF !important;
+  border: 1px solid var(--app-border, #E2E8F0) !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+  box-sizing: border-box !important;
+  transition: all 0.2s ease !important;
+  position: relative !important;
+}
+
+.app-booth-card--completed {
+  border-color: #86EFAC !important;
+  background: #F9FFF9 !important;
+  box-shadow: 0 2px 10px rgba(22, 163, 74, 0.06) !important;
+}
+
+.app-booth-card--playable {
+  cursor: pointer !important;
+}
+
+.app-booth-card--playable:hover {
+  border-color: #2563EB !important;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.1) !important;
+  transform: translateY(-1px) !important;
+}
+
+.app-booth-card--active {
+  border-color: #2563EB !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25) !important;
+}
+
+.app-booth-card__left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+.app-booth-card__num {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  background: #EFF6FF !important;
+  color: #2563EB !important;
+  font-family: var(--font-display, "Space Grotesk") !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+.app-booth-card__num--completed {
+  background: #DCFCE7 !important;
+  color: #16A34A !important;
+}
+
+.app-booth-card__divider {
+  width: 1px !important;
+  height: 34px !important;
+  background: #E2E8F0 !important;
+  flex-shrink: 0 !important;
+}
+
+.app-booth-card__info {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+.app-booth-card__title {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: #0F172A !important;
+  line-height: 1.25 !important;
+  margin: 0 !important;
+}
+
+.app-booth-card__desc {
+  font-size: 12px !important;
+  color: #64748B !important;
+  line-height: 1.35 !important;
+  margin: 0 !important;
+}
+
+.app-booth-card__right {
+  display: flex !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+}
+
+/* Green Completed Pill (from Screenshot: ✔ COMPLETED · 1/5 PTS) */
+.app-booth-badge--completed {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  border-radius: 999px !important;
+  background: #DCFCE7 !important;
+  color: #16A34A !important;
+  font-family: var(--font-body, "Inter") !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.03em !important;
+  text-transform: uppercase !important;
+}
+
+.app-booth-badge--limit {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 6px 12px !important;
+  border-radius: 999px !important;
+  background: #F1F5F9 !important;
+  color: #94A3B8 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* Solid Blue Pill Button (from Screenshot: ▶ PLAY CHALLENGE) */
+.app-play-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 8px 16px !important;
+  border-radius: 999px !important;
+  background: #2563EB !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  font-family: var(--font-body, "Inter") !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3) !important;
+  transition: all 0.15s ease !important;
+}
+
+.app-play-btn:hover {
+  background: #1D4ED8 !important;
+  transform: translateY(-1px) scale(1.02) !important;
+}
+
+.app-play-btn:active {
+  transform: scale(0.97) !important;
+}
+
+/* ==========================================================================
+   BOTTOM NAVIGATION BAR (Matching Reference Screenshot Tab Bar)
    ========================================================================== */
 .app-nav-dock {
   position: sticky !important;
@@ -752,53 +1015,255 @@ body {
   display: flex !important;
   align-items: center !important;
   justify-content: space-around !important;
-  height: 62px !important;
-  padding-bottom: max(env(safe-area-inset-bottom, 0px), 6px) !important;
+  height: 64px !important;
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px) !important;
   background: #FFFFFF !important;
-  border-top: 1px solid var(--app-border) !important;
-  box-shadow: 0 -2px 10px rgba(15, 23, 42, 0.05) !important;
+  border-top: 1px solid var(--app-border, #E2E8F0) !important;
+  box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.06) !important;
   box-sizing: content-box !important;
   z-index: 90 !important;
   flex-shrink: 0 !important;
 }
 
 .app-nav-tab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  flex: 1;
-  height: 100%;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--app-text-muted);
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 6px 0;
-  transition: all 0.15s ease;
-  user-select: none;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  flex: 1 !important;
+  height: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  color: #64748B !important;
+  font-family: var(--font-body, "Inter") !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  padding: 6px 0 !important;
+  transition: all 0.15s ease !important;
+  user-select: none !important;
+  position: relative !important;
 }
 
 .app-nav-tab svg {
-  width: 22px;
-  height: 22px;
-  transition: transform 0.15s ease;
+  width: 22px !important;
+  height: 22px !important;
+  transition: transform 0.15s ease !important;
+}
+
+.app-nav-tab:hover {
+  color: #0F172A !important;
 }
 
 .app-nav-tab--active {
-  color: var(--app-primary);
+  color: #2563EB !important;
+  font-weight: 800 !important;
 }
 
 .app-nav-tab--active svg {
-  transform: scale(1.08);
+  color: #2563EB !important;
+  transform: scale(1.05) !important;
+}
+
+/* Solid Blue Active Indicator Line Underneath the Active Tab (from Screenshot) */
+.app-nav-tab__indicator {
+  display: block !important;
+  width: 32px !important;
+  height: 3px !important;
+  background: #2563EB !important;
+  border-radius: 999px !important;
+  position: absolute !important;
+  bottom: 2px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
 }
 
 /* ==========================================================================
-   GLOBAL APP-WIDE LIGHT THEME OVERRIDES (Full Cover Mobile Web App)
+   HOME SCREEN HERO & SUPPORTING TILES
    ========================================================================== */
+.app-home-hero {
+  display: flex !important;
+  flex-direction: column !important;
+  background: #FFFFFF !important;
+  border: 1px solid var(--app-border, #E2E8F0) !important;
+  border-radius: 20px !important;
+  padding: 22px 20px !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
+  gap: 12px !important;
+  box-sizing: border-box !important;
+}
+
+.app-home-hero__badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 4px 12px !important;
+  border-radius: 999px !important;
+  background: #EFF6FF !important;
+  color: #2563EB !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em !important;
+  align-self: flex-start !important;
+}
+
+.app-home-hero__title {
+  font-family: var(--font-display, "Space Grotesk") !important;
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  color: #0F172A !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.app-home-hero__highlight {
+  color: #2563EB !important;
+}
+
+.app-home-hero__tagline {
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: #D97706 !important;
+  margin: 0 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+}
+
+.app-home-hero__desc {
+  font-size: 14px !important;
+  color: #475569 !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+}
+
+.app-target-booth-pill {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 14px !important;
+  border-radius: 12px !important;
+  background: #EFF6FF !important;
+  border: 1px solid rgba(37, 99, 235, 0.25) !important;
+}
+
+.app-target-booth-icon {
+  color: #2563EB !important;
+}
+
+.app-target-booth-text {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.app-target-booth-lbl {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  color: #2563EB !important;
+  letter-spacing: 0.05em !important;
+}
+
+.app-target-booth-name {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #0F172A !important;
+}
+
+.app-home-cta-box {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  margin-top: 6px !important;
+}
+
+.app-home-primary-btn {
+  width: 100% !important;
+  font-size: 16px !important;
+  border-radius: 14px !important;
+}
+
+.app-home-secondary-links {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.app-home-link-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: transparent !important;
+  border: none !important;
+  color: #2563EB !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  padding: 6px 4px !important;
+}
+
+.app-home-link-btn:hover {
+  text-decoration: underline !important;
+}
+
+.app-stats-row {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.app-stat-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 14px 10px !important;
+  background: #FFFFFF !important;
+  border: 1px solid var(--app-border, #E2E8F0) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+}
+
+.app-stat-value {
+  font-family: var(--font-display, "Space Grotesk") !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  color: #0F172A !important;
+  line-height: 1.1 !important;
+}
+
+.app-stat-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #64748B !important;
+  margin-top: 4px !important;
+  text-align: center !important;
+}
+
+/* ==========================================================================
+   DESKTOP & TABLET CONSTRAINED VIEW (Prevent horizontal stretch)
+   ========================================================================== */
+@media (min-width: 640px) {
+  body {
+    background-color: #E2E8F0 !important;
+  }
+
+  .app-screen,
+  .ts-layout,
+  .ts-page {
+    max-width: 500px !important;
+    margin: 0 auto !important;
+    box-shadow: 0 10px 40px rgba(15, 23, 42, 0.12) !important;
+    border-left: 1px solid #CBD5E1 !important;
+    border-right: 1px solid #CBD5E1 !important;
+    background-color: #F4F6FB !important;
+    min-height: 100dvh !important;
+  }
+}
+
 html, body {
   background-color: #F4F6FB !important;
   color: #0F172A !important;

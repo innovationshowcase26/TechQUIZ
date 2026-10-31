@@ -1,75 +1,89 @@
-import { HomeIcon, GridIcon, ScanLineIcon, HelpCircleIcon, UserIcon } from './Icons';
-
-export type NavItem = 'home' | 'booths' | 'passport' | 'faqs' | 'profile';
+export type NavItem = 'home' | 'passport' | 'scan' | 'profile' | 'booths' | 'faqs';
 
 interface MobileNavProps {
   activeItem?: NavItem;
   onHome?: () => void;
-  onBooths?: () => void;
   onPassport?: () => void;
-  onFaqs?: () => void;
+  onScan?: () => void;
   onProfile?: () => void;
+  onBooths?: () => void;
+  onFaqs?: () => void;
 }
 
 export function MobileNav({
   activeItem = 'home',
   onHome,
-  onBooths,
   onPassport,
-  onFaqs,
+  onScan,
   onProfile,
+  onBooths,
+  onFaqs: _onFaqs,
 }: MobileNavProps) {
+  const isHomeActive = activeItem === 'home' || activeItem === 'booths';
+  const isPassportActive = activeItem === 'passport';
+  const isScanActive = activeItem === 'scan';
+  const isProfileActive = activeItem === 'profile';
+
   return (
-    <nav className="ts-mobile-nav" aria-label="Showcase navigation">
+    <nav className="app-nav-dock" aria-label="Bottom Navigation">
       <button
         type="button"
-        className={`ts-mobile-nav__item ${activeItem === 'home' ? 'ts-mobile-nav__item--active' : ''}`}
-        onClick={onHome}
+        className={`app-nav-tab ${isHomeActive ? 'app-nav-tab--active' : ''}`}
+        onClick={onHome || onBooths}
         aria-label="Home"
       >
-        <span className="ts-mobile-nav__icon"><HomeIcon size={22} /></span>
-        <small>Home</small>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+        <span>Home</span>
+        {isHomeActive && <span className="app-nav-tab__indicator" />}
       </button>
 
       <button
         type="button"
-        className={`ts-mobile-nav__item ${activeItem === 'booths' ? 'ts-mobile-nav__item--active' : ''}`}
-        onClick={onBooths}
-        aria-label="Booths"
-      >
-        <span className="ts-mobile-nav__icon"><GridIcon size={22} /></span>
-        <small>Booths</small>
-      </button>
-
-      <button
-        type="button"
-        className="ts-mobile-nav__item ts-mobile-nav__item--passport"
+        className={`app-nav-tab ${isPassportActive ? 'app-nav-tab--active' : ''}`}
         onClick={onPassport}
         aria-label="Passport"
       >
-        <div className="ts-mobile-nav__passport-bubble">
-          <ScanLineIcon size={26} />
-        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect width="18" height="18" x="3" y="3" rx="2" />
+          <path d="M3 9h18" />
+          <path d="M9 21V9" />
+        </svg>
+        <span>Passport</span>
+        {isPassportActive && <span className="app-nav-tab__indicator" />}
       </button>
 
       <button
         type="button"
-        className={`ts-mobile-nav__item ${activeItem === 'faqs' ? 'ts-mobile-nav__item--active' : ''}`}
-        onClick={onFaqs}
-        aria-label="FAQs"
+        className={`app-nav-tab ${isScanActive ? 'app-nav-tab--active' : ''}`}
+        onClick={onScan}
+        aria-label="Scan QR Code"
       >
-        <span className="ts-mobile-nav__icon"><HelpCircleIcon size={22} /></span>
-        <small>FAQs</small>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+          <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+          <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+          <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+          <line x1="7" y1="12" x2="17" y2="12" />
+        </svg>
+        <span>Scan QR</span>
+        {isScanActive && <span className="app-nav-tab__indicator" />}
       </button>
 
       <button
         type="button"
-        className={`ts-mobile-nav__item ${activeItem === 'profile' ? 'ts-mobile-nav__item--active' : ''}`}
+        className={`app-nav-tab ${isProfileActive ? 'app-nav-tab--active' : ''}`}
         onClick={onProfile}
         aria-label="Profile"
       >
-        <span className="ts-mobile-nav__icon"><UserIcon size={22} /></span>
-        <small>Profile</small>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        <span>Profile</span>
+        {isProfileActive && <span className="app-nav-tab__indicator" />}
       </button>
     </nav>
   );

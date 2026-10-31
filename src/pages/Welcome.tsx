@@ -1,18 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { BoothConfig, Participant } from '../types';
-import { Button } from '../components/Button';
 import { BOOTHS, REQUIRED_BOOTHS_TO_WIN, TOTAL_BOOTHS } from '../data/boothsConfig';
 import {
   SparklesIcon,
-  ChevronRightIcon,
   CloseIcon,
   getBoothIcon,
   AlertCircleIcon,
+  TrophyIcon,
 } from '../components/Icons';
 import { QRScannerModal } from '../components/QRScannerModal';
 import { parseBoothFromScan, playErrorSound } from '../utils/qrHelper';
 import { MobileNav } from '../components/MobileNav';
+import { AppStickyHeader } from '../components/AppStickyHeader';
 
 interface WelcomeProps {
   targetBooth: BoothConfig | null;
@@ -41,6 +41,7 @@ export function Welcome({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const isTargetReached = completedCount >= REQUIRED_BOOTHS_TO_WIN;
+  const progressPercentage = Math.min(100, Math.round((completedCount / REQUIRED_BOOTHS_TO_WIN) * 100));
 
   const modalRef = useRef<HTMLDivElement>(null);
   const modalCloseButtonRef = useRef<HTMLButtonElement>(null);
@@ -126,286 +127,327 @@ export function Welcome({
     }
   }, [scanTargetBooth, onSelectBooth, onStart]);
 
-  const handleBoothClick = (booth: BoothConfig) => {
-    handleOpenScanner(booth);
-  };
+  const greetingName = useMemo(() => {
+    if (!participant?.name) return 'Innovator';
+    return participant.name.trim().split(/\s+/)[0];
+  }, [participant?.name]);
 
   return (
-    <div className="ts-page ts-page--welcome">
-      <section className="ts-hero-card" role="region" aria-label="Innovation Showcase 2026">
-        <div className="ts-hero-card__orb" aria-hidden="true" />
+    <div className="app-screen app-screen--home" role="main">
+      {/* 1. Official Sticky App Header */}
+      <AppStickyHeader
+        subtitle="Home"
+        rightAction={
+          <button
+            type="button"
+            className="app-header-scan-btn"
+            onClick={() => handleOpenScanner(null)}
+            aria-label="Scan QR Code"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+              <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+              <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+              <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+              <line x1="7" y1="12" x2="17" y2="12" />
+            </svg>
+            <span>Scan QR</span>
+          </button>
+        }
+      />
 
-        <div className="ts-hero-content">
-          <div className="ts-hero-copy">
-            <span className="ts-hero-eyebrow">
-              <SparklesIcon size={14} className="ts-hero-eyebrow__icon" aria-hidden="true" />
-              WELCOME, INNOVATOR
-            </span>
-            <h1 className="ts-hero-title">
-              Ideas become<br />
-              <span className="ts-gradient-text">impact.</span>
-            </h1>
-            <p className="ts-hero-description">
-              Explore nine showcases, take on up to four challenges and earn your spot on the leaderboard.
-            </p>
+      {/* 2. Middle Scrollable Body */}
+      <div className="app-screen-body">
+        {/* Welcome Hero Banner Card */}
+        <section className="app-home-hero" aria-label="Innovation Showcase Welcome">
+          <div className="app-home-hero__badge">
+            <SparklesIcon size={14} aria-hidden="true" />
+            <span>INNOVATION SHOWCASE 2026</span>
           </div>
 
-          <svg className="ts-hero-art" viewBox="0 0 360 420" role="img" aria-label="Glowing light bulb representing innovation">
-            <defs>
-              <radialGradient id="bulb-halo" cx="50%" cy="42%" r="55%">
-                <stop offset="0%" stopColor="#fff4c2" stopOpacity=".95" />
-                <stop offset="55%" stopColor="#ffd18c" stopOpacity=".48" />
-                <stop offset="100%" stopColor="#fff7e6" stopOpacity="0" />
-              </radialGradient>
-              <linearGradient id="bulb-glass" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#fff" stopOpacity=".98" />
-                <stop offset="45%" stopColor="#ffe7a7" stopOpacity=".62" />
-                <stop offset="100%" stopColor="#fff" stopOpacity=".88" />
-              </linearGradient>
-              <linearGradient id="bulb-base" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#f4a22a" />
-                <stop offset="50%" stopColor="#fff1bc" />
-                <stop offset="100%" stopColor="#e77922" />
-              </linearGradient>
-              <filter id="bulb-glow" x="-80%" y="-80%" width="260%" height="260%">
-                <feGaussianBlur stdDeviation="11" />
-              </filter>
-            </defs>
-            <circle cx="190" cy="188" r="152" fill="url(#bulb-halo)" />
-            <path d="M25 295 C112 215 210 350 350 226" fill="none" stroke="#f8be45" strokeWidth="17" strokeLinecap="round" opacity=".8" />
-            <path d="M18 331 C115 250 244 377 355 277" fill="none" stroke="#e5254d" strokeWidth="13" strokeLinecap="round" opacity=".85" />
-            <path d="M48 362 C139 293 236 389 340 324" fill="none" stroke="#f49a22" strokeWidth="9" strokeLinecap="round" opacity=".9" />
-            <path d="M179 84 C132 84 104 119 108 163 C111 196 132 208 141 234 L149 263 L217 263 L226 234 C236 208 257 193 259 160 C262 117 228 84 179 84Z" fill="#ffcc61" opacity=".54" filter="url(#bulb-glow)" />
-            <path d="M179 77 C132 77 103 112 107 157 C110 191 132 204 141 231 L149 259 L217 259 L226 231 C235 205 256 190 259 157 C263 112 229 77 179 77Z" fill="url(#bulb-glass)" stroke="#fff" strokeWidth="5" />
-            <path d="M144 156 C156 135 164 129 174 124 M214 156 C202 135 194 129 184 124 M179 126 L179 221 M148 166 C158 171 162 178 164 189 M210 166 C200 171 196 178 194 189" fill="none" stroke="#fffdf3" strokeWidth="3" strokeLinecap="round" opacity=".9" />
-            <circle cx="145" cy="156" r="10" fill="none" stroke="#fffdf3" strokeWidth="3" />
-            <circle cx="213" cy="156" r="10" fill="none" stroke="#fffdf3" strokeWidth="3" />
-            <circle cx="164" cy="190" r="9" fill="none" stroke="#fffdf3" strokeWidth="3" />
-            <circle cx="194" cy="190" r="9" fill="none" stroke="#fffdf3" strokeWidth="3" />
-            <path d="M151 263 H215 L207 281 H159 Z M157 284 H209 L202 300 H164 Z M165 303 H201 L193 320 H173 Z" fill="url(#bulb-base)" stroke="#fff8e4" strokeWidth="3" strokeLinejoin="round" />
-            <path d="M137 326 H229 C238 326 245 333 245 342 V349 H121 V342 C121 333 128 326 137 326Z" fill="#fff" fillOpacity=".52" stroke="#fff" strokeWidth="4" />
-          </svg>
+          <h1 className="app-home-hero__title">
+            Welcome, <span className="app-home-hero__highlight">{greetingName}</span>
+          </h1>
 
+          <p className="app-home-hero__tagline">
+            Innovate &gt;&gt; Adopt &gt;&gt; Reuse
+          </p>
+
+          <p className="app-home-hero__desc">
+            Explore 9 technology booths, tackle interactive challenges, and qualify for official Wells Fargo Summit recognition.
+          </p>
+
+          {/* Scanned QR alert card if targeted */}
           {targetBooth && (
-            <div className="ts-hero-scanned-card">
-              <span className="ts-hero-scanned-icon">{getBoothIcon(targetBooth.number, 22)}</span>
-              <div className="ts-hero-scanned-text">
-                <span className="ts-hero-scanned-label">QR CODE DETECTED</span>
-                <h3 className="ts-hero-scanned-title">Booth {targetBooth.number}: {targetBooth.title}</h3>
+            <div className="app-target-booth-pill">
+              <span className="app-target-booth-icon">{getBoothIcon(targetBooth.number, 20)}</span>
+              <div className="app-target-booth-text">
+                <span className="app-target-booth-lbl">QR CODE DETECTED</span>
+                <span className="app-target-booth-name">Booth {targetBooth.number}: {targetBooth.title}</span>
               </div>
             </div>
           )}
 
-          <div className="ts-hero-cta-group">
+          {/* Primary CTA */}
+          <div className="app-home-cta-box">
             <button
               type="button"
-              className="ts-hero-primary-btn"
+              className="app-dock-btn app-dock-btn--primary app-home-primary-btn"
               onClick={hasSavedQuiz ? onResume : onStart}
             >
-              <span className="ts-hero-primary-btn__text">
-                {hasSavedQuiz
-                  ? 'Resume Active Quiz'
-                  : participant
-                  ? 'Enter Challenge Passport'
-                  : 'Register for Tech Challenge'}
-              </span>
+              {hasSavedQuiz
+                ? 'Resume Active Quiz →'
+                : participant
+                ? 'Open Challenge Passport →'
+                : 'Register & Start Challenge →'}
             </button>
 
-            {participant ? (
+            <div className="app-home-secondary-links">
               <button
                 type="button"
-                className={`ts-hero-passport-link ${isTargetReached ? 'ts-hero-passport-link--winner' : ''}`}
-                onClick={onOpenPassport}
+                className="app-home-link-btn"
+                onClick={() => handleOpenScanner(null)}
               >
-                {isTargetReached
-                  ? `🏆 Target Reached! (${completedCount}/${REQUIRED_BOOTHS_TO_WIN}) View Passport`
-                  : `Passport progress (${completedCount}/${REQUIRED_BOOTHS_TO_WIN})`}
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                  <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+                  <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                  <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+                  <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                  <line x1="7" y1="12" x2="17" y2="12" />
+                </svg>
+                <span>Quick Scan QR</span>
               </button>
-            ) : (
+
               <button
                 type="button"
-                className="ts-hero-rules-link"
+                className="app-home-link-btn"
                 onClick={() => setShowInfoModal(true)}
               >
-                View Challenge Guidelines &amp; Prize Rules
+                <span>Guidelines &amp; Prize Rules</span>
               </button>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <div className="ts-info-cards">
-        <div className="ts-info-card">
-          <span className="ts-info-card__value">{TOTAL_BOOTHS}</span>
-          <span className="ts-info-card__label">BOOTHS</span>
-        </div>
-        <div className={`ts-info-card ${isTargetReached ? 'ts-info-card--target-reached' : ''}`}>
-          <span className="ts-info-card__value">{isTargetReached ? '✓ 4' : REQUIRED_BOOTHS_TO_WIN}</span>
-          <span className="ts-info-card__label">{isTargetReached ? 'TARGET REACHED' : 'TO WIN'}</span>
-        </div>
-        <div className="ts-info-card">
-          <span className="ts-info-card__value">60s</span>
-          <span className="ts-info-card__label">PER QUIZ</span>
-        </div>
-      </div>
-
-      <div className="ts-showcase-section" id="booths">
-        <div className="ts-showcase-section__header">
-          <div className="ts-showcase-section__heading-row">
-            <h2 className="ts-showcase-section__title">Explore the booths</h2>
-            <a className="ts-showcase-view-all" href="#booths-grid">
-              View all
-            </a>
-          </div>
-        </div>
-
-        <div className="ts-showcase-booths-grid" id="booths-grid">
-          {BOOTHS.map((b) => (
-            <div
-              key={b.id}
-              className={`ts-showcase-booth-card ${targetBooth?.id === b.id ? 'ts-showcase-booth-card--active' : ''}`}
-              onClick={() => handleBoothClick(b)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === ' ') e.preventDefault();
-                if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) handleBoothClick(b);
-              }}
-            >
-              <div className="ts-showcase-booth-card__icon" aria-hidden="true">
-                {getBoothIcon(b.number, 22)}
-              </div>
-
-              <div className="ts-showcase-booth-card__content">
-                <span className="ts-showcase-booth-card__num">BOOTH {b.number}</span>
-                <h3 className="ts-showcase-booth-card__title">{b.title}</h3>
-                <p className="ts-showcase-booth-card__desc">{b.description}</p>
-              </div>
-
-              {targetBooth?.id === b.id && (
-                <span className="ts-booth-scanned-pill">Scanned</span>
-              )}
-
-              <span className="ts-showcase-booth-card__arrow" aria-hidden="true">
-                <ChevronRightIcon size={18} />
-              </span>
             </div>
-          ))}
-        </div>
+          </div>
+        </section>
+
+        {/* Live Challenge Overview Card */}
+        {participant ? (
+          <section className="app-card app-challenge-journey-card" aria-label="Your Progress">
+            <div className="app-journey-header">
+              <div className="app-journey-left">
+                <span className="app-journey-icon" aria-hidden="true">
+                  <TrophyIcon size={20} />
+                </span>
+                <div>
+                  <h2 className="app-journey-title">Your Passport Progress</h2>
+                  <div className="app-journey-subtitle">
+                    {isTargetReached
+                      ? '🏆 Target Reached! Qualified for Summit Prizes'
+                      : `${completedCount} of ${REQUIRED_BOOTHS_TO_WIN} challenges completed`}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="app-section-link"
+                onClick={onOpenPassport}
+              >
+                View Passport →
+              </button>
+            </div>
+
+            <div className="app-journey-progress-row">
+              <div className="app-journey-progress-track">
+                <div
+                  className="app-journey-progress-fill"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+              <span className="app-journey-percent">{progressPercentage}%</span>
+            </div>
+          </section>
+        ) : (
+          /* 3 Key Stats / Rules Tiles */
+          <div className="app-stats-row">
+            <div className="app-stat-card">
+              <span className="app-stat-value">{TOTAL_BOOTHS}</span>
+              <span className="app-stat-label">Showcase Booths</span>
+            </div>
+            <div className="app-stat-card">
+              <span className="app-stat-value">{REQUIRED_BOOTHS_TO_WIN}</span>
+              <span className="app-stat-label">To Qualify</span>
+            </div>
+            <div className="app-stat-card">
+              <span className="app-stat-value">60s</span>
+              <span className="app-stat-label">Per Challenge</span>
+            </div>
+          </div>
+        )}
+
+        {/* Booth Discovery Section */}
+        <section className="app-booth-challenges-section" id="booths" aria-label="Showcase Booths">
+          <div className="app-section-header">
+            <div className="app-section-left">
+              <span className="app-section-grid-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                  <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                </svg>
+              </span>
+              <h2 className="app-section-title">Explore 9 Tech Showcases</h2>
+            </div>
+            <button
+              type="button"
+              className="app-section-link"
+              onClick={() => handleOpenScanner(null)}
+            >
+              Scan Any QR
+            </button>
+          </div>
+
+          <div className="app-booth-cards-list" role="list">
+            {BOOTHS.map((b) => (
+              <div
+                key={b.id}
+                role="listitem"
+                className={`app-booth-card app-booth-card--playable ${targetBooth?.id === b.id ? 'app-booth-card--active' : ''}`}
+                onClick={() => handleOpenScanner(b)}
+              >
+                <div className="app-booth-card__left">
+                  <div className="app-booth-card__num" aria-hidden="true">
+                    {b.number}
+                  </div>
+                  <div className="app-booth-card__divider" aria-hidden="true" />
+                  <div className="app-booth-card__info">
+                    <h3 className="app-booth-card__title">{b.title}</h3>
+                    <p className="app-booth-card__desc">{b.description}</p>
+                  </div>
+                </div>
+
+                <div className="app-booth-card__right">
+                  <button
+                    type="button"
+                    className="app-play-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenScanner(b);
+                    }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    <span>EXPLORE</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Guidelines Dialog Modal */}
+        {showInfoModal && typeof document !== 'undefined' && createPortal(
+          <div className="ts-modal-overlay" onClick={() => setShowInfoModal(false)}>
+            <div
+              ref={modalRef}
+              className="ts-modal-card"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="welcome-guidelines-title"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="ts-modal-header">
+                <div className="ts-modal-header__brand">
+                  <div className="ts-modal-header__icon-badge" aria-hidden="true"><SparklesIcon size={18} /></div>
+                  <div>
+                    <div className="ts-modal-eyebrow">CHALLENGE GUIDELINES</div>
+                    <h2 id="welcome-guidelines-title" className="ts-modal-title">Innovation Showcase 2026</h2>
+                  </div>
+                </div>
+                <button
+                  ref={modalCloseButtonRef}
+                  type="button"
+                  className="ts-modal-close-btn"
+                  onClick={() => setShowInfoModal(false)}
+                  aria-label="Close"
+                >
+                  <CloseIcon size={18} />
+                </button>
+              </div>
+
+              <div className="ts-modal-body">
+                <div className="ts-sync-destination-card">
+                  <div className="ts-sync-dest-row">
+                    <span className="ts-sync-dest-label">Venues:</span>
+                    <span className="ts-sync-dest-value">Bengaluru | Hyderabad | Virtual</span>
+                  </div>
+                  <div className="ts-sync-dest-row">
+                    <span className="ts-sync-dest-label">Theme:</span>
+                    <span className="ts-sync-dest-value" style={{ color: 'var(--app-primary)', fontWeight: 700 }}>INNOVATE • ADOPT • REUSE</span>
+                  </div>
+                  <div className="ts-sync-dest-row">
+                    <span className="ts-sync-dest-label">Tech Talks:</span>
+                    <span className="ts-sync-dest-value">October 26–30, 2026</span>
+                  </div>
+                  <div className="ts-sync-dest-row">
+                    <span className="ts-sync-dest-label">Flagship Event:</span>
+                    <span className="ts-sync-dest-value">November 2, 2026</span>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 style={{ fontFamily: 'var(--font-display)', marginBottom: '8px', color: 'var(--app-text-primary)' }}>
+                    Interactive 9-Booth Rules:
+                  </h4>
+                  <ul style={{ paddingLeft: '18px', color: 'var(--app-text-secondary)', lineHeight: 1.6, fontSize: '14px' }}>
+                    <li>Choose up to 4 quizzes from the 9 core architectural and emerging technology booths.</li>
+                    <li>Each booth quiz has 5 targeted questions with an interactive 60-second timer.</li>
+                    <li>Complete <strong>4 booths</strong> to qualify for the official Summit Winner Prize. Each participant can play a maximum of 4 booths.</li>
+                    <li>Registration and completed quiz attempts sync automatically to Firebase and are cached on this device.</li>
+                  </ul>
+                </div>
+
+                <div className="ts-modal-actions">
+                  <button
+                    type="button"
+                    className="app-dock-btn app-dock-btn--primary"
+                    style={{ width: '100%' }}
+                    onClick={() => setShowInfoModal(false)}
+                  >
+                    Got it, Let's Play!
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+        {/* Live Camera QR Scanner Modal */}
+        <QRScannerModal
+          isOpen={isScannerOpen}
+          onClose={() => setIsScannerOpen(false)}
+          onScanSuccess={handleScanSuccess}
+          targetBooth={scanTargetBooth}
+        />
+
+        {/* Toast feedback */}
+        {toastMessage && (
+          <div className="ts-scanner-toast ts-scanner-toast--error" role="alert">
+            <span><AlertCircleIcon size={18} /></span>
+            <span>{toastMessage}</span>
+          </div>
+        )}
       </div>
 
-      {/* 4. Action Banner */}
-      <div className="ts-welcome-actions">
-        <Button onClick={hasSavedQuiz ? onResume : onStart} fullWidth variant="secondary">
-          {hasSavedQuiz
-            ? 'Resume Current Quiz'
-            : participant
-            ? 'View Full Passport & Progress'
-            : 'Register for Innovation Showcase'}
-        </Button>
-      </div>
-
-      <p className="ts-page__footer">
-        Scan a booth QR code to unlock its quiz.
-      </p>
-
+      {/* 3. Universal Bottom Navigation */}
       <MobileNav
         activeItem="home"
         onHome={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        onBooths={() => document.getElementById('booths')?.scrollIntoView({ behavior: 'smooth' })}
         onPassport={onOpenPassport}
-        onFaqs={() => setShowInfoModal(true)}
+        onScan={() => handleOpenScanner(null)}
         onProfile={onStart}
       />
-
-      {/* Info Dialog Modal */}
-      {showInfoModal && typeof document !== 'undefined' && createPortal(
-        <div className="ts-modal-overlay" onClick={() => setShowInfoModal(false)}>
-          <div
-            ref={modalRef}
-            className="ts-modal-card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="welcome-guidelines-title"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="ts-modal-header">
-              <div className="ts-modal-header__brand">
-                <div className="ts-modal-header__icon-badge" aria-hidden="true"><SparklesIcon size={18} /></div>
-                <div>
-                  <div className="ts-modal-eyebrow">CHALLENGE GUIDELINES</div>
-                  <h2 id="welcome-guidelines-title" className="ts-modal-title">Innovation Showcase 2026</h2>
-                </div>
-              </div>
-              <button
-                ref={modalCloseButtonRef}
-                type="button"
-                className="ts-modal-close-btn"
-                onClick={() => setShowInfoModal(false)}
-                aria-label="Close"
-              >
-                <CloseIcon size={18} />
-              </button>
-            </div>
-
-            <div className="ts-modal-body">
-              <div className="ts-sync-destination-card">
-                <div className="ts-sync-dest-row">
-                  <span className="ts-sync-dest-label">Venues:</span>
-                  <span className="ts-sync-dest-value">Bengaluru | Hyderabad | Virtual</span>
-                </div>
-                <div className="ts-sync-dest-row">
-                  <span className="ts-sync-dest-label">Theme:</span>
-                  <span className="ts-sync-dest-value" style={{ color: 'var(--accent-gold)' }}>INNOVATE • ADOPT • REUSE</span>
-                </div>
-                <div className="ts-sync-dest-row">
-                  <span className="ts-sync-dest-label">Tech Talks:</span>
-                  <span className="ts-sync-dest-value">October 26–30, 2026</span>
-                </div>
-                <div className="ts-sync-dest-row">
-                  <span className="ts-sync-dest-label">Flagship Event:</span>
-                  <span className="ts-sync-dest-value">November 2, 2026</span>
-                </div>
-              </div>
-
-              <div>
-                <h4 style={{ fontFamily: 'var(--font-display)', marginBottom: '8px', color: 'var(--text-primary)' }}>
-                  Interactive 9-Booth Rules:
-                </h4>
-                <ul style={{ paddingLeft: '18px', color: 'var(--text-secondary)', lineHeight: 1.6, fontSize: '14px' }}>
-                  <li>Choose up to 4 quizzes from the 9 core architectural and emerging technology booths.</li>
-                  <li>Each booth quiz has 5 targeted questions with a rapid 60-second timer.</li>
-                  <li>Complete <strong>4 booths</strong> to qualify for the official Summit Winner Prize. Each participant can play a maximum of 4 booths.</li>
-                  <li>Registration and completed quiz attempts sync to Firebase Firestore and are cached on this device.</li>
-                </ul>
-              </div>
-
-              <div className="ts-modal-actions">
-                <Button variant="primary" onClick={() => setShowInfoModal(false)}>
-                  Got it, Let's Play!
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* Live Camera QR Scanner Modal */}
-      <QRScannerModal
-        isOpen={isScannerOpen}
-        onClose={() => setIsScannerOpen(false)}
-        onScanSuccess={handleScanSuccess}
-        targetBooth={scanTargetBooth}
-      />
-
-      {/* Toast feedback */}
-      {toastMessage && (
-        <div className="ts-scanner-toast ts-scanner-toast--error" role="alert">
-          <span><AlertCircleIcon size={18} /></span>
-          <span>{toastMessage}</span>
-        </div>
-      )}
     </div>
   );
 }

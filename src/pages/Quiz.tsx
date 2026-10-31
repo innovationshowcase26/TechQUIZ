@@ -180,32 +180,20 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
         {isGame ? (
           <div className="app-game-container" style={{ marginTop: '16px', width: '100%' }}>
             {selectedIdx !== null ? (
-              <div className="emoji-game-result" style={{ padding: '20px 0' }}>
+              <div className="emoji-game-result" style={{ padding: '16px 0' }}>
                 <div className={`emoji-game-result__card ${selectedIdx === (question.correctAnswer ?? 1) ? 'emoji-game-result__card--won' : 'emoji-game-result__card--lost'}`}>
-                  <span className="emoji-game-result__icon">{selectedIdx === (question.correctAnswer ?? 1) ? '🎉' : '😅'}</span>
+                  <span className="emoji-game-result__icon">{selectedIdx === (question.correctAnswer ?? 1) ? '🎉' : '❌'}</span>
                   <p className="emoji-game-result__msg">
                     {selectedIdx === (question.correctAnswer ?? 1)
                       ? (question.gameData?.winMsg || 'Challenge Completed! 🎉')
-                      : (question.gameData?.loseMsg || 'Even robots miss sometimes 🤖')}
+                      : (question.gameData?.loseMsg || 'Challenge Missed 🤖')}
                   </p>
-                  <div style={{ marginTop: '8px', fontSize: '12px', fontWeight: 700, color: selectedIdx === (question.correctAnswer ?? 1) ? '#16a34a' : '#dc2626' }}>
+                  <div style={{ marginTop: '8px', fontSize: '13px', fontWeight: 800, color: selectedIdx === (question.correctAnswer ?? 1) ? '#16a34a' : '#dc2626' }}>
                     {selectedIdx === (question.correctAnswer ?? 1) ? '✓ Challenge Completed (+1 Point)' : 'Challenge Failed (0 Points)'}
                   </div>
-                  <button
-                    type="button"
-                    className="emoji-btn emoji-btn--retry-play"
-                    style={{
-                      marginTop: '14px',
-                      fontSize: '13px',
-                      fontWeight: 800,
-                      padding: '8px 22px',
-                    }}
-                    onClick={() => {
-                      setSelectedIdx(null);
-                    }}
-                  >
-                    🔄 Play Again
-                  </button>
+                  <div style={{ marginTop: '12px', fontSize: '12.5px', color: 'var(--app-text-muted, #64748B)', fontWeight: 600 }}>
+                    {isLast ? 'Challenge recorded! Tap "Submit Challenge" below to finish.' : 'Challenge recorded! Tap "Next Question →" below to proceed.'}
+                  </div>
                 </div>
               </div>
             ) : (

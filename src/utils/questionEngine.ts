@@ -943,7 +943,8 @@ export async function loadBoothQuestions(boothId: string, participantId?: string
           const { picked: pickedMcqs } = pickUniqueItems(mcqs, 3, seenIds);
 
           // Pick 2 non-repeating Games with GUARANTEED distinct game types and cross-booth rotation
-          const pickedGames = pickDistinctGames(games, 2, seenIds, participantId);
+          const freshGames = buildGamesForBooth(key, 60);
+          const pickedGames = pickDistinctGames(freshGames, 2, seenIds, participantId);
 
           // Persist updated seen history
           try {
