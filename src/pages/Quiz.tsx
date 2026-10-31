@@ -3,6 +3,7 @@ import type { QuizState } from '../types';
 import { getRemainingSeconds, getTimerPhase } from '../utils/timer';
 import { playAnswerSound } from '../utils/qrHelper';
 import { AppStickyHeader } from '../components/AppStickyHeader';
+import { GameRunner } from '../components/games/GameRunner';
 
 interface QuizProps {
   quizState: QuizState;
@@ -13,29 +14,12 @@ interface QuizProps {
   submitting: boolean;
 }
 
-function removeEmoji(text: string): string {
-  return text
-    .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '')
-    .trim();
-}
-
 function cleanBoothName(boothTitle: string): string {
-  const cleaned = removeEmoji(boothTitle);
-  const parts = cleaned.split('•').map((s) => s.trim());
-  return parts[0] || cleaned || 'TECHNOLOGY CHALLENGE';
+  const parts = boothTitle.split('•').map((s) => s.trim());
+  return parts[0] || boothTitle || 'TECHNOLOGY CHALLENGE';
 }
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
-
-const DEFAULT_CODE_SNIPPET = {
-  lines: [
-    'const payload = await sftpStream.readChunk();',
-    'const sanitized = scrubPIIFields(payload);',
-    "if (sanitized.length > 0) fs.rmSync('/', { recursive: true }); // delete temp files",
-    'await elasticClient.bulkIndex(sanitized);',
-  ],
-  bugLineIndex: 2,
-};
 
 export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting }: QuizProps) {
   const [endTime, setEndTime] = useState<number | null>(quizState.endTime);
@@ -101,16 +85,14 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
 
   if (rawQuestionText.includes(':')) {
     const colonIdx = rawQuestionText.indexOf(':');
-    displayTitle = removeEmoji(rawQuestionText.slice(0, colonIdx));
-    displayInstruction = removeEmoji(rawQuestionText.slice(colonIdx + 1));
+    displayTitle = rawQuestionText.slice(0, colonIdx).trim();
+    displayInstruction = rawQuestionText.slice(colonIdx + 1).trim();
   } else {
-    displayTitle = isGame ? 'Code Review Challenge' : removeEmoji(rawQuestionText);
+    displayTitle = rawQuestionText.trim();
     displayInstruction = isGame
-      ? 'Identify the single line that will break production in the snippet below.'
+      ? 'Complete the mini-game challenge below!'
       : 'Select the best answer from the options below.';
   }
-
-  const codeLines: string[] = question.gameData?.lines || DEFAULT_CODE_SNIPPET.lines;
 
   const handleSelectOption = (idx: number) => {
     playAnswerSound();
@@ -179,10 +161,10 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
       <section className="app-card" aria-labelledby="app-question-heading">
         <div className="app-card-eyebrow-row">
           <span className="app-tag-pill">
-            {isGame ? 'MINI-GAME CHALLENGE' : 'MULTIPLE CHOICE'}
+            {isGame ? '🎮 MINI-GAME CHALLENGE' : 'MULTIPLE CHOICE'}
           </span>
           <span className="app-category-text">
-            {removeEmoji(question.category || 'DATA & SECURITY')}
+            {question.category || 'DATA & SECURITY'}
           </span>
         </div>
 
@@ -194,28 +176,53 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
           {displayInstruction}
         </p>
 
-        {/* Code Lines OR MCQ Option Tiles */}
+        {/* Dynamic Mini-Game Interactive Runner OR MCQ Option Tiles */}
         {isGame ? (
-          <div className="app-code-container" role="radiogroup" aria-label="Select line with bug">
-            {codeLines.map((line, idx) => {
-              const isSelected = selectedIdx === idx;
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  role="radio"
-                  aria-checked={isSelected}
-                  className={`app-code-row ${isSelected ? 'app-code-row--selected' : ''}`}
-                  onClick={() => handleSelectOption(idx)}
-                >
-                  <span className="app-code-gutter" aria-hidden="true">{idx + 1}</span>
-                  <span className="app-code-text">{line}</span>
-                  <span className="app-radio-indicator" aria-hidden="true">
-                    {isSelected && <span className="app-radio-dot" />}
-                  </span>
-                </button>
-              );
-            })}
+          <div className="app-game-container" style={{ marginTop: '16px', width: '100%' }}>
+            {selectedIdx !== null ? (
+              <div className="emoji-game-result" style={{ padding: '20px 0' }}>
+                <div className={`emoji-game-result__card ${selectedIdx === (question.correctAnswer ?? 1) ? 'emoji-game-result__card--won' : 'emoji-game-result__card--lost'}`}>
+                  <span className="emoji-game-result__icon">{selectedIdx === (question.correctAnswer ?? 1) ? '🎉' : '😅'}</span>
+                  <p className="emoji-game-result__msg">
+                    {selectedIdx === (question.correctAnswer ?? 1)
+                      ? (question.gameData?.winMsg || 'Challenge Completed! 🎉')
+                      : (question.gameData?.loseMsg || 'Even robots miss sometimes 🤖')}
+                  </p>
+                  <div style={{ marginTop: '8px', fontSize: '12px', fontWeight: 700, color: selectedIdx === (question.correctAnswer ?? 1) ? '#16a34a' : '#dc2626' }}>
+                    {selectedIdx === (question.correctAnswer ?? 1) ? '✓ Challenge Completed (+1 Point)' : 'Challenge Failed (0 Points)'}
+                  </div>
+                  <button
+                    type="button"
+                    className="emoji-btn emoji-btn--replay"
+                    style={{
+                      marginTop: '14px',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      padding: '8px 20px',
+                      background: 'rgba(255,255,255,0.25)',
+                      border: '1px solid rgba(255,255,255,0.4)',
+                      borderRadius: '20px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      setSelectedIdx(null);
+                    }}
+                  >
+                    🔄 Play Again
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <GameRunner
+                key={`${question.id}_${currentIndex}`}
+                question={question}
+                onDone={(won) => {
+                  const ansIdx = won ? (question.correctAnswer ?? 1) : 0;
+                  handleSelectOption(ansIdx);
+                }}
+              />
+            )}
           </div>
         ) : (
           <div className="app-options-list" role="radiogroup" aria-label="Answer options">
@@ -233,7 +240,7 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
                   <span className="app-option-letter" aria-hidden="true">
                     {LETTERS[idx]}
                   </span>
-                  <span className="app-option-content">{removeEmoji(option)}</span>
+                  <span className="app-option-content">{option}</span>
                   <span className="app-radio-indicator" aria-hidden="true">
                     {isSelected && <span className="app-radio-dot" />}
                   </span>
