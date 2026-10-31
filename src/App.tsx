@@ -91,6 +91,18 @@ export default function App() {
   useEffect(() => {
     setTestMode(isTestMode());
 
+    // Auto-purge any stale in-progress quiz session from previous app versions
+    const APP_BUILD_VERSION = '2026.10.31.v3_emoji_games';
+    try {
+      const storedVersion = localStorage.getItem('tech_quiz_app_version');
+      if (storedVersion !== APP_BUILD_VERSION) {
+        clearQuizState();
+        localStorage.setItem('tech_quiz_app_version', APP_BUILD_VERSION);
+      }
+    } catch {
+      // LocalStorage safety
+    }
+
     const savedParticipant = getParticipant();
     if (savedParticipant) {
       // Older builds kept one unscoped result cache. Only migrate it when this
