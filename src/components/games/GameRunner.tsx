@@ -150,11 +150,11 @@ function MemoryMissing({ d, onDone }: { d: any; onDone: (won: boolean) => void }
 
 
 // ═══════════════════════════════════════════
-// 🎯 2. GRID TAP (Complex: 4x4 16 tiles, need 6 targets in 10s, 1 life)
+// 🎯 2. GRID TAP (Complex: 4x4 16 tiles, need 6 targets in 30s, 1 life)
 // ═══════════════════════════════════════════
 function GridTap({ d, onDone }: { d: any; onDone: (won: boolean) => void }) {
   const [score, setScore] = useState<number>(0);
-  const [timeLeft, setTimeLeft] = useState<number>(d.durationSec || 10);
+  const [timeLeft, setTimeLeft] = useState<number>(d.durationSec || 30);
   const [cells, setCells] = useState<string[]>([]);
   const [flash, setFlash] = useState<number | null>(null);
   const [gameOver, setGameOver] = useState(false);

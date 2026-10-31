@@ -51,9 +51,15 @@ const FUN_GAMES = new Set([
 ]);
 
 function isStaleQuiz(sq: QuizState): boolean {
+  if (!sq.questions || sq.questions.length !== 5) return true;
+  const expectedPattern = ['mcq', 'game', 'mcq', 'game', 'mcq'];
+  const matchesPattern = sq.questions.every((q, idx) => {
+    const isGame = q.itemType === 'game';
+    return expectedPattern[idx] === 'game' ? isGame : !isGame;
+  });
+  if (!matchesPattern) return true;
   const games = sq.questions.filter(q => q.itemType === 'game');
-  const mcqs = sq.questions.filter(q => q.itemType !== 'game');
-  return mcqs.length !== 3 || games.length !== 2 || games.some(g => !FUN_GAMES.has(g.gameType as string));
+  return games.some(g => !FUN_GAMES.has(g.gameType as string));
 }
 
 export default function App() {
@@ -92,7 +98,7 @@ export default function App() {
     setTestMode(isTestMode());
 
     // Auto-purge any stale in-progress quiz session from previous app versions
-    const APP_BUILD_VERSION = '2026.10.31.v3_emoji_games';
+    const APP_BUILD_VERSION = '2026.11.01.v4_timer_order';
     try {
       const storedVersion = localStorage.getItem('tech_quiz_app_version');
       if (storedVersion !== APP_BUILD_VERSION) {
@@ -272,7 +278,7 @@ export default function App() {
       const dynamicPool = await loadBoothQuestions(booth.id, participantEmail);
       const pool = dynamicPool.length > 0 ? dynamicPool : (topic?.questions && topic.questions.length > 0 ? topic.questions : booth.questions);
       const count = Math.min(QUESTION_COUNT, pool.length);
-      const prepared = prepareQuestions(pool, count);
+      const prepared = prepareQuestions(pool, count, booth.id);
       const newQuiz: QuizState = {
         participantEmail,
         boothId: booth.id,
@@ -286,6 +292,7 @@ export default function App() {
         startTime: Date.now(),
         endTime: null,
         submitted: false,
+        mainSecondsRemaining: 90,
       };
       setQuizState(newQuiz);
       saveQuizState(newQuiz);
@@ -364,30 +371,42 @@ export default function App() {
     [participant?.email, targetBooth, startBoothQuiz],
   );
 
-  const handleAnswer = useCallback((questionIndex: number, answerIndex: number) => {
+  const handleAnswer = useCallback((questionIndex: number, answerIndex: number, remainingSeconds?: number) => {
     setQuizState((prev) => {
       if (!prev) return prev;
       const answers = [...prev.answers];
       answers[questionIndex] = answerIndex;
-      const updated = { ...prev, answers };
+      const updated = {
+        ...prev,
+        answers,
+        mainSecondsRemaining: remainingSeconds !== undefined ? remainingSeconds : prev.mainSecondsRemaining,
+      };
       saveQuizState(updated);
       return updated;
     });
   }, []);
 
-  const handleNext = useCallback(() => {
+  const handleNext = useCallback((remainingSeconds?: number) => {
     setQuizState((prev) => {
       if (!prev) return prev;
-      const updated = { ...prev, currentIndex: Math.min(prev.currentIndex + 1, prev.questions.length - 1) };
+      const updated = {
+        ...prev,
+        currentIndex: Math.min(prev.currentIndex + 1, prev.questions.length - 1),
+        mainSecondsRemaining: remainingSeconds !== undefined ? remainingSeconds : prev.mainSecondsRemaining,
+      };
       saveQuizState(updated);
       return updated;
     });
   }, []);
 
-  const handlePrev = useCallback(() => {
+  const handlePrev = useCallback((remainingSeconds?: number) => {
     setQuizState((prev) => {
       if (!prev) return prev;
-      const updated = { ...prev, currentIndex: Math.max(prev.currentIndex - 1, 0) };
+      const updated = {
+        ...prev,
+        currentIndex: Math.max(prev.currentIndex - 1, 0),
+        mainSecondsRemaining: remainingSeconds !== undefined ? remainingSeconds : prev.mainSecondsRemaining,
+      };
       saveQuizState(updated);
       return updated;
     });
@@ -409,8 +428,8 @@ export default function App() {
       }
     });
 
-    const endTime = qs.endTime ?? Date.now();
-    const timeTaken = Math.min(90, Math.floor((endTime - qs.startTime) / 1000));
+    const mainRemaining = qs.mainSecondsRemaining ?? Math.max(0, 90 - Math.floor(((qs.endTime ?? Date.now()) - qs.startTime) / 1000));
+    const timeTaken = Math.max(1, Math.min(90, 90 - mainRemaining));
     const total = qs.questions.length;
     const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
 
@@ -425,7 +444,7 @@ export default function App() {
     };
   }, []);
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(async (remainingSeconds?: number) => {
     if (submitting) return;
     setSubmitting(true);
     setDownloadError(null);
@@ -433,7 +452,12 @@ export default function App() {
     setQuizState((prev) => {
       if (!prev) return prev;
       const endTime = Date.now();
-      const updated = { ...prev, endTime, submitted: true };
+      const updated = {
+        ...prev,
+        endTime,
+        submitted: true,
+        mainSecondsRemaining: remainingSeconds !== undefined ? remainingSeconds : prev.mainSecondsRemaining,
+      };
       saveQuizState(updated);
       return updated;
     });

@@ -104,6 +104,7 @@ export interface QuizState {
   startTime: number;
   endTime: number | null;
   submitted: boolean;
+  mainSecondsRemaining?: number;
 }
 
 export interface QuizResult {

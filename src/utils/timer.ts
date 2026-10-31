@@ -1,4 +1,5 @@
 export const TIMER_DURATION_SECONDS = 90;
+export const GAME_TIMER_SECONDS = 30;
 
 export function getRemainingSeconds(startTime: number, endTime: number | null): number {
   const reference = endTime ?? Date.now();

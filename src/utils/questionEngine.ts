@@ -923,7 +923,7 @@ export async function loadBoothQuestions(boothId: string, participantId?: string
         const mcqs = allItems.filter((item) => item.itemType !== 'game');
         const games = allItems.filter((item) => item.itemType === 'game');
 
-        if (mcqs.length >= 3 && games.length >= 2) {
+        if (mcqs.length >= 3) {
           // Read seen question cache from storage for this booth
           const storageKey = `ts_seen_${key}_${participantId ? participantId.replace(/[^a-zA-Z0-9]/g, '_') : 'guest'}`;
           let seenIds = new Set<string>();
@@ -943,8 +943,8 @@ export async function loadBoothQuestions(boothId: string, participantId?: string
           const { picked: pickedMcqs } = pickUniqueItems(mcqs, 3, seenIds);
 
           // Pick 2 non-repeating Games with GUARANTEED distinct game types and cross-booth rotation
-          const freshGames = buildGamesForBooth(key, 60);
-          const pickedGames = pickDistinctGames(freshGames, 2, seenIds, participantId);
+          const gameSource = games.length >= 2 ? games : buildGamesForBooth(key, 60);
+          const pickedGames = pickDistinctGames(gameSource, 2, seenIds, participantId);
 
           // Persist updated seen history
           try {
@@ -953,7 +953,7 @@ export async function loadBoothQuestions(boothId: string, participantId?: string
             // LocalStorage safety
           }
 
-          // Return in rhythmic alternating order: [MCQ 1, Game 1, MCQ 2, Game 2, MCQ 3]
+          // Return strictly in order: [MCQ 1, Game 1, MCQ 2, Game 2, MCQ 3]
           return [
             pickedMcqs[0],
             pickedGames[0],

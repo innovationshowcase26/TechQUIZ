@@ -1,16 +1,16 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import type { QuizState } from '../types';
-import { getRemainingSeconds, getTimerPhase } from '../utils/timer';
-import { playAnswerSound } from '../utils/qrHelper';
+import { TIMER_DURATION_SECONDS, GAME_TIMER_SECONDS, getTimerPhase } from '../utils/timer';
+import { playAnswerSound, playFailBuzz } from '../utils/qrHelper';
 import { AppStickyHeader } from '../components/AppStickyHeader';
 import { GameRunner } from '../components/games/GameRunner';
 
 interface QuizProps {
   quizState: QuizState;
-  onAnswer: (questionIndex: number, answerIndex: number) => void;
-  onNext: () => void;
-  onPrev: () => void;
-  onSubmit: () => void;
+  onAnswer: (questionIndex: number, answerIndex: number, remainingSeconds?: number) => void;
+  onNext: (remainingSeconds?: number) => void;
+  onPrev: (remainingSeconds?: number) => void;
+  onSubmit: (remainingSeconds?: number) => void;
   submitting: boolean;
 }
 
@@ -24,45 +24,96 @@ const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting }: QuizProps) {
   const [endTime, setEndTime] = useState<number | null>(quizState.endTime);
   const [expired, setExpired] = useState(false);
-  const [remainingSeconds, setRemainingSeconds] = useState(() => getRemainingSeconds(quizState.startTime, quizState.endTime));
 
   const currentIndex = quizState.currentIndex;
   const question = quizState.questions[currentIndex];
   const isLast = currentIndex === quizState.questions.length - 1;
+  const isGame = question?.itemType === 'game';
 
   // Selected answer index for current question (restore if previously chosen)
   const [selectedIdx, setSelectedIdx] = useState<number | null>(() => {
     return quizState.answers[currentIndex] ?? null;
   });
 
-  // Sync selected answer when currentIndex changes
+  // Main 90-second Countdown Timer state
+  const [mainRemainingSeconds, setMainRemainingSeconds] = useState<number>(() => {
+    return quizState.mainSecondsRemaining ?? TIMER_DURATION_SECONDS;
+  });
+
+  // Mini-Game 30-second Countdown Timer state
+  const [gameSecondsLeft, setGameSecondsLeft] = useState<number>(GAME_TIMER_SECONDS);
+
+  // Sync selected answer and reset mini-game timer when currentIndex changes
   useEffect(() => {
-    setSelectedIdx(quizState.answers[currentIndex] ?? null);
-  }, [currentIndex, quizState.answers]);
+    const existingAnswer = quizState.answers[currentIndex] ?? null;
+    setSelectedIdx(existingAnswer);
+    if (existingAnswer === null && isGame) {
+      setGameSecondsLeft(GAME_TIMER_SECONDS);
+    }
+  }, [currentIndex, quizState.answers, isGame]);
+
+  // Track if game is actively being played (not yet submitted, quiz not expired)
+  const isGameActive = isGame && selectedIdx === null && !expired && !submitting && endTime === null;
+
+  // Millisecond tracking refs to eliminate interval drift
+  const mainTimeSpentMsRef = useRef<number>((TIMER_DURATION_SECONDS - (quizState.mainSecondsRemaining ?? TIMER_DURATION_SECONDS)) * 1000);
+  const lastTickTimestampRef = useRef<number>(Date.now());
 
   const handleExpire = useCallback(() => {
     if (expired || submitting) return;
     setExpired(true);
     setEndTime(Date.now());
-    onSubmit();
+    onSubmit(0);
   }, [expired, submitting, onSubmit]);
 
-  // Overall Countdown Timer (90 seconds)
+  const handleGameTimeOver = useCallback(() => {
+    if (selectedIdx !== null) return;
+    playFailBuzz();
+    // Auto-record challenge as incomplete (0 points)
+    const ansIdx = 0;
+    setSelectedIdx(ansIdx);
+    onAnswer(currentIndex, ansIdx, Math.round(mainRemainingSeconds));
+  }, [selectedIdx, currentIndex, mainRemainingSeconds, onAnswer]);
+
+  // Unified Dual-Timer Engine:
+  // When Game is running: Game timer ticks down from 30s; Main 90s timer is STOPPED.
+  // After Game is submitted or times out, or when on MCQ: Main 90s timer runs.
   useEffect(() => {
-    if (endTime !== null) {
-      setRemainingSeconds(getRemainingSeconds(quizState.startTime, endTime));
-      return;
-    }
+    if (endTime !== null || expired || submitting) return;
+
+    lastTickTimestampRef.current = Date.now();
+
     const interval = setInterval(() => {
-      const r = getRemainingSeconds(quizState.startTime, null);
-      setRemainingSeconds(r);
-      if (r <= 0) {
-        clearInterval(interval);
-        handleExpire();
+      const now = Date.now();
+      const deltaMs = now - lastTickTimestampRef.current;
+      lastTickTimestampRef.current = now;
+
+      if (isGameActive) {
+        // Main 90s Timer is STOPPED!
+        // 30s Game Timer is RUNNING!
+        setGameSecondsLeft((prev) => {
+          const next = Math.max(0, prev - (deltaMs / 1000));
+          if (next <= 0) {
+            handleGameTimeOver();
+            return 0;
+          }
+          return next;
+        });
+      } else {
+        // Main 90s Timer is RUNNING!
+        mainTimeSpentMsRef.current += deltaMs;
+        const totalSpentSec = Math.floor(mainTimeSpentMsRef.current / 1000);
+        const rem = Math.max(0, TIMER_DURATION_SECONDS - totalSpentSec);
+        setMainRemainingSeconds(rem);
+        if (rem <= 0) {
+          clearInterval(interval);
+          handleExpire();
+        }
       }
-    }, 250);
+    }, 200);
+
     return () => clearInterval(interval);
-  }, [quizState.startTime, endTime, handleExpire]);
+  }, [endTime, expired, submitting, isGameActive, handleExpire, handleGameTimeOver]);
 
   if (!question) {
     return (
@@ -74,9 +125,9 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
     );
   }
 
-  const isGame = question.itemType === 'game';
   const totalQuestions = quizState.questions.length;
-  const timerPhase = getTimerPhase(remainingSeconds);
+  const timerPhase = getTimerPhase(mainRemainingSeconds);
+  const displayGameSeconds = Math.ceil(gameSecondsLeft);
 
   // Parse title and instruction
   const rawQuestionText = question.question || '';
@@ -90,23 +141,28 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
   } else {
     displayTitle = rawQuestionText.trim();
     displayInstruction = isGame
-      ? 'Complete the mini-game challenge below!'
+      ? 'Complete the 30-second mini-game challenge below!'
       : 'Select the best answer from the options below.';
   }
 
   const handleSelectOption = (idx: number) => {
     playAnswerSound();
     setSelectedIdx(idx);
-    onAnswer(currentIndex, idx);
+    onAnswer(currentIndex, idx, mainRemainingSeconds);
   };
 
   const handleProceed = () => {
     if (selectedIdx === null || submitting || expired) return;
     if (isLast) {
-      onSubmit();
+      onSubmit(mainRemainingSeconds);
     } else {
-      onNext();
+      onNext(mainRemainingSeconds);
     }
+  };
+
+  const handleBack = () => {
+    if (currentIndex === 0 || submitting || expired) return;
+    onPrev(mainRemainingSeconds);
   };
 
   return (
@@ -116,7 +172,7 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
 
       {/* 2. Scrollable Middle Body */}
       <div className="app-screen-body">
-        {/* Booth Context Bar with 90s Countdown Timer */}
+        {/* Booth Context Bar with Dynamic Timer Display */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '8px' }}>
           <div>
             <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--app-primary)' }}>
@@ -127,17 +183,93 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
             </div>
           </div>
 
-          {/* 90s Timer Badge */}
-          <div
-            className={`app-timer-badge ${timerPhase === 'critical' || remainingSeconds <= 15 ? 'app-timer-badge--urgent' : ''}`}
-            aria-live="polite"
-            aria-label={`Time remaining: ${remainingSeconds} seconds`}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-            <span>{remainingSeconds}s</span>
+          {/* Timers Container */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            {isGame && isGameActive ? (
+              <>
+                {/* 30s Active Mini-Game Timer */}
+                <div
+                  className={`app-timer-badge ${displayGameSeconds <= 10 ? 'app-timer-badge--urgent' : ''}`}
+                  style={{
+                    background: displayGameSeconds <= 5 ? '#FEF2F2' : (displayGameSeconds <= 10 ? '#FFFBEB' : '#EFF6FF'),
+                    borderColor: displayGameSeconds <= 5 ? '#EF4444' : (displayGameSeconds <= 10 ? '#F59E0B' : '#3B82F6'),
+                    color: displayGameSeconds <= 5 ? '#DC2626' : (displayGameSeconds <= 10 ? '#D97706' : '#1D4ED8'),
+                    fontWeight: 800,
+                  }}
+                  aria-live="polite"
+                  aria-label={`Mini-game timer: ${displayGameSeconds} seconds remaining`}
+                >
+                  <span role="img" aria-label="gamepad">🎮</span>
+                  <span>Game: {displayGameSeconds}s</span>
+                </div>
+
+                {/* Main 90s Timer Paused Indicator */}
+                <div
+                  className="app-timer-badge"
+                  style={{
+                    background: '#F1F5F9',
+                    borderColor: '#CBD5E1',
+                    color: '#64748B',
+                    fontWeight: 700,
+                    fontSize: '11.5px',
+                  }}
+                  aria-label={`Main timer paused at ${mainRemainingSeconds} seconds`}
+                  title="Main booth timer paused while playing mini-game"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="6" y="4" width="4" height="16" />
+                    <rect x="14" y="4" width="4" height="16" />
+                  </svg>
+                  <span>Main: {mainRemainingSeconds}s (Paused)</span>
+                </div>
+              </>
+            ) : isGame && selectedIdx !== null ? (
+              <>
+                {/* Game Recorded Badge */}
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    padding: '3px 8px',
+                    borderRadius: '12px',
+                    background: '#DCFCE7',
+                    color: '#166534',
+                    border: '1px solid #BBF7D0',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  ✓ Game Saved
+                </span>
+
+                {/* Main 90s Timer Running */}
+                <div
+                  className={`app-timer-badge ${timerPhase === 'critical' || mainRemainingSeconds <= 15 ? 'app-timer-badge--urgent' : ''}`}
+                  aria-live="polite"
+                  aria-label={`Time remaining: ${mainRemainingSeconds} seconds`}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  <span>{mainRemainingSeconds}s</span>
+                </div>
+              </>
+            ) : (
+              /* MCQ Main 90s Timer */
+              <div
+                className={`app-timer-badge ${timerPhase === 'critical' || mainRemainingSeconds <= 15 ? 'app-timer-badge--urgent' : ''}`}
+                aria-live="polite"
+                aria-label={`Time remaining: ${mainRemainingSeconds} seconds`}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                <span>{mainRemainingSeconds}s</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -157,84 +289,129 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
           ))}
         </div>
 
-      {/* 3. Main Question / Game Card */}
-      <section className="app-card" aria-labelledby="app-question-heading">
-        <div className="app-card-eyebrow-row">
-          <span className="app-tag-pill">
-            {isGame ? '🎮 MINI-GAME CHALLENGE' : 'MULTIPLE CHOICE'}
-          </span>
-          <span className="app-category-text">
-            {question.category || 'DATA & SECURITY'}
-          </span>
-        </div>
+        {/* 3. Main Question / Game Card */}
+        <section className="app-card" aria-labelledby="app-question-heading">
+          <div className="app-card-eyebrow-row">
+            <span className="app-tag-pill">
+              {isGame ? '🎮 MINI-GAME CHALLENGE' : 'MULTIPLE CHOICE'}
+            </span>
+            <span className="app-category-text">
+              {question.category || 'DATA & SECURITY'}
+            </span>
+          </div>
 
-        <h1 id="app-question-heading" className="app-card-title">
-          {displayTitle}
-        </h1>
+          <h1 id="app-question-heading" className="app-card-title">
+            {displayTitle}
+          </h1>
 
-        <p className="app-card-subtitle">
-          {displayInstruction}
-        </p>
+          <p className="app-card-subtitle">
+            {displayInstruction}
+          </p>
 
-        {/* Dynamic Mini-Game Interactive Runner OR MCQ Option Tiles */}
-        {isGame ? (
-          <div className="app-game-container" style={{ marginTop: '16px', width: '100%' }}>
-            {selectedIdx !== null ? (
-              <div className="emoji-game-result" style={{ padding: '16px 0' }}>
-                <div className={`emoji-game-result__card ${selectedIdx === (question.correctAnswer ?? 1) ? 'emoji-game-result__card--won' : 'emoji-game-result__card--lost'}`}>
-                  <span className="emoji-game-result__icon">{selectedIdx === (question.correctAnswer ?? 1) ? '🎉' : '❌'}</span>
-                  <p className="emoji-game-result__msg">
-                    {selectedIdx === (question.correctAnswer ?? 1)
-                      ? (question.gameData?.winMsg || 'Challenge Completed! 🎉')
-                      : (question.gameData?.loseMsg || 'Challenge Missed 🤖')}
-                  </p>
-                  <div style={{ marginTop: '8px', fontSize: '13px', fontWeight: 800, color: selectedIdx === (question.correctAnswer ?? 1) ? '#16a34a' : '#dc2626' }}>
-                    {selectedIdx === (question.correctAnswer ?? 1) ? '✓ Challenge Completed (+1 Point)' : 'Challenge Failed (0 Points)'}
+          {/* Dynamic Mini-Game Interactive Runner OR MCQ Option Tiles */}
+          {isGame ? (
+            <div className="app-game-container" style={{ marginTop: '16px', width: '100%' }}>
+              {/* Active Mini-Game 30s Countdown Banner */}
+              {selectedIdx === null && (
+                <div
+                  style={{
+                    marginBottom: '14px',
+                    background: '#F8FAFC',
+                    borderRadius: '12px',
+                    padding: '10px 14px',
+                    border: '1px solid #E2E8F0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>🎮 30s Challenge</span>
+                      <span style={{ fontSize: '11px', background: '#DCFCE7', color: '#166534', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
+                        ⏸️ Main 90s Timer Paused
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '13px',
+                        fontWeight: 800,
+                        color: displayGameSeconds <= 5 ? '#DC2626' : (displayGameSeconds <= 10 ? '#D97706' : '#2563EB'),
+                      }}
+                    >
+                      ⏱️ {displayGameSeconds}s Left
+                    </div>
                   </div>
-                  <div style={{ marginTop: '12px', fontSize: '12.5px', color: 'var(--app-text-muted, #64748B)', fontWeight: 600 }}>
-                    {isLast ? 'Challenge recorded! Tap "Submit Challenge" below to finish.' : 'Challenge recorded! Tap "Next Question →" below to proceed.'}
+                  {/* Animated 30-Second Countdown Progress Bar */}
+                  <div style={{ height: '6px', width: '100%', background: '#E2E8F0', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${Math.max(0, Math.min(100, (gameSecondsLeft / GAME_TIMER_SECONDS) * 100))}%`,
+                        background: displayGameSeconds <= 5 ? '#DC2626' : (displayGameSeconds <= 10 ? '#F59E0B' : '#2563EB'),
+                        transition: 'width 0.2s linear',
+                      }}
+                    />
                   </div>
                 </div>
-              </div>
-            ) : (
-              <GameRunner
-                key={`${question.id}_${currentIndex}`}
-                question={question}
-                onDone={(won) => {
-                  const ansIdx = won ? (question.correctAnswer ?? 1) : 0;
-                  handleSelectOption(ansIdx);
-                }}
-              />
-            )}
-          </div>
-        ) : (
-          <div className="app-options-list" role="radiogroup" aria-label="Answer options">
-            {question.options.map((option, idx) => {
-              const isSelected = selectedIdx === idx;
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  role="radio"
-                  aria-checked={isSelected}
-                  className={`app-option-tile ${isSelected ? 'app-option-tile--selected' : ''}`}
-                  onClick={() => handleSelectOption(idx)}
-                >
-                  <span className="app-option-letter" aria-hidden="true">
-                    {LETTERS[idx]}
-                  </span>
-                  <span className="app-option-content">{option}</span>
-                  <span className="app-radio-indicator" aria-hidden="true">
-                    {isSelected && <span className="app-radio-dot" />}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
+              )}
 
-        <div className="app-card-spacer" aria-hidden="true" />
-      </section>
+              {selectedIdx !== null ? (
+                <div className="emoji-game-result" style={{ padding: '16px 0' }}>
+                  <div className={`emoji-game-result__card ${selectedIdx === (question.correctAnswer ?? 1) ? 'emoji-game-result__card--won' : 'emoji-game-result__card--lost'}`}>
+                    <span className="emoji-game-result__icon">{selectedIdx === (question.correctAnswer ?? 1) ? '🎉' : '❌'}</span>
+                    <p className="emoji-game-result__msg">
+                      {selectedIdx === (question.correctAnswer ?? 1)
+                        ? (question.gameData?.winMsg || 'Challenge Completed! 🎉')
+                        : (gameSecondsLeft <= 0 ? '⏰ Time\'s Up! Challenge Expired 🤖' : (question.gameData?.loseMsg || 'Challenge Missed 🤖'))}
+                    </p>
+                    <div style={{ marginTop: '8px', fontSize: '13px', fontWeight: 800, color: selectedIdx === (question.correctAnswer ?? 1) ? '#16a34a' : '#dc2626' }}>
+                      {selectedIdx === (question.correctAnswer ?? 1) ? '✓ Challenge Completed (+1 Point)' : 'Challenge Failed (0 Points)'}
+                    </div>
+                    <div style={{ marginTop: '12px', fontSize: '12.5px', color: 'var(--app-text-muted, #64748B)', fontWeight: 600 }}>
+                      {isLast ? 'Challenge recorded! Tap "Submit Challenge" below to finish.' : 'Challenge recorded! Main timer running — tap "Next Question →" below.'}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <GameRunner
+                  key={`${question.id}_${currentIndex}`}
+                  question={question}
+                  onDone={(won) => {
+                    const ansIdx = won ? (question.correctAnswer ?? 1) : 0;
+                    handleSelectOption(ansIdx);
+                  }}
+                />
+              )}
+            </div>
+          ) : (
+            <div className="app-options-list" role="radiogroup" aria-label="Answer options">
+              {question.options.map((option, idx) => {
+                const isSelected = selectedIdx === idx;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    role="radio"
+                    aria-checked={isSelected}
+                    className={`app-option-tile ${isSelected ? 'app-option-tile--selected' : ''}`}
+                    onClick={() => handleSelectOption(idx)}
+                  >
+                    <span className="app-option-letter" aria-hidden="true">
+                      {LETTERS[idx]}
+                    </span>
+                    <span className="app-option-content">{option}</span>
+                    <span className="app-radio-indicator" aria-hidden="true">
+                      {isSelected && <span className="app-radio-dot" />}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="app-card-spacer" aria-hidden="true" />
+        </section>
       </div>
 
       {/* 4. Bottom Sticky Action Dock */}
@@ -242,7 +419,7 @@ export function Quiz({ quizState, onAnswer, onNext, onPrev, onSubmit, submitting
         <button
           type="button"
           className="app-dock-btn app-dock-btn--secondary"
-          onClick={onPrev}
+          onClick={handleBack}
           disabled={currentIndex === 0 || submitting || expired}
         >
           ← Back

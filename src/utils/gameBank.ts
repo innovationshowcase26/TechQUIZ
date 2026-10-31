@@ -147,8 +147,8 @@ const BUILDERS: Record<string, Builder> = {
     const pair = TRICKY_PAIRS[i % TRICKY_PAIRS.length] || sample(r, pool, 2);
     const [target, decoy] = pair;
     return {
-      q: `🎯 Rapid Reflex: Tap 6 of ${target} in 10s — avoid ${decoy}! (1 Mistake = Fail)`,
-      gameData: { target, decoy, size: 16, goal: 6, durationSec: 10, lives: 1 },
+      q: `🎯 Rapid Reflex: Tap 6 of ${target} in 30s — avoid ${decoy}! (1 Mistake = Fail)`,
+      gameData: { target, decoy, size: 16, goal: 6, durationSec: 30, lives: 1 },
     };
   },
 
