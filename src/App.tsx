@@ -44,6 +44,18 @@ function quizBelongsToParticipant(quiz: QuizState, participant: Participant | nu
   );
 }
 
+const FUN_GAMES = new Set([
+  'memory_missing', 'grid_tap', 'odd_one', 'pair_match',
+  'sequence', 'timer_stop', 'luck_pick', 'sort_bucket',
+  'pattern_quiz', 'crowd_judge'
+]);
+
+function isStaleQuiz(sq: QuizState): boolean {
+  const games = sq.questions.filter(q => q.itemType === 'game');
+  const mcqs = sq.questions.filter(q => q.itemType !== 'game');
+  return mcqs.length !== 3 || games.length !== 2 || games.some(g => !FUN_GAMES.has(g.gameType as string));
+}
+
 export default function App() {
   const [stage, setStage] = useState<AppStage>('WELCOME');
   const [prevStage, setPrevStage] = useState<AppStage>('WELCOME');
@@ -106,7 +118,7 @@ export default function App() {
 
       // Check for unfinished saved quiz for THIS specific booth
       const savedQuiz = getQuizState();
-      if (savedQuiz && !quizBelongsToParticipant(savedQuiz, savedParticipant)) {
+      if (savedQuiz && (!quizBelongsToParticipant(savedQuiz, savedParticipant) || isStaleQuiz(savedQuiz))) {
         clearQuizState();
       } else if (savedQuiz && savedQuiz.boothId === matchedBooth.id && !savedQuiz.submitted) {
         if (Object.keys(savedResults).length >= MAX_BOOTHS_PER_PARTICIPANT) {
@@ -164,7 +176,7 @@ export default function App() {
 
     // Check for unfinished saved quiz (when no specific booth param in URL)
     const savedQuiz = getQuizState();
-    if (savedQuiz && !quizBelongsToParticipant(savedQuiz, savedParticipant)) {
+    if (savedQuiz && (!quizBelongsToParticipant(savedQuiz, savedParticipant) || isStaleQuiz(savedQuiz))) {
       clearQuizState();
     } else if (savedQuiz && !savedQuiz.submitted && savedQuiz.questions.length > 0) {
       if (savedResults[savedQuiz.boothId]) {
