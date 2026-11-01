@@ -13,6 +13,7 @@ const AlreadyPlayed = lazy(() => import('./pages/AlreadyPlayed').then((module) =
 const Passport = lazy(() => import('./pages/Passport').then((module) => ({ default: module.Passport })));
 const FirebaseStatusModal = lazy(() => import('./components/FirebaseStatusModal').then((module) => ({ default: module.FirebaseStatusModal })));
 import { prepareQuestions } from './utils/quiz';
+import { GameRulesModal } from './components/GameRulesModal';
 import {
   getParticipant,
   saveParticipant,
@@ -77,6 +78,7 @@ export default function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isFirebaseModalOpen, setIsFirebaseModalOpen] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [rulesModalBooth, setRulesModalBooth] = useState<{ booth: BoothConfig; topic?: BoothTopic; participantEmail?: string } | null>(null);
 
   useEffect(() => {
     if (!participant?.email) return;
@@ -171,7 +173,9 @@ export default function App() {
                 setCurrentBoothResult(res.boothResults[matchedBooth.id]);
                 setStage('ALREADY_PLAYED');
               } else {
-                startBoothQuiz(matchedBooth, undefined, res.participant.email);
+                setTargetBooth(matchedBooth);
+                setRulesModalBooth({ booth: matchedBooth, participantEmail: res.participant.email });
+                setStage('PASSPORT');
               }
             } else {
               setStage('PARTICIPANT');
@@ -187,8 +191,10 @@ export default function App() {
         return;
       }
 
-      // User registered and booth not yet played: start quiz directly!
-      startBoothQuiz(matchedBooth, undefined, savedParticipant.email);
+      // User registered and booth not yet played: show rules popup!
+      setTargetBooth(matchedBooth);
+      setRulesModalBooth({ booth: matchedBooth, participantEmail: savedParticipant.email });
+      setStage('PASSPORT');
       return;
     }
 
@@ -303,10 +309,48 @@ export default function App() {
     }
   }, [participant?.email]);
 
+  const requestStartBooth = useCallback((booth: BoothConfig, topic?: BoothTopic, participantEmail = participant?.email) => {
+    if (!participantEmail) {
+      setTargetBooth(booth);
+      setStage('PARTICIPANT');
+      return;
+    }
+
+    const participantResults = getBoothResults(participantEmail);
+    if (participantResults[booth.id]) {
+      setCurrentBoothResult(participantResults[booth.id]);
+      setTargetBooth(booth);
+      setStage('ALREADY_PLAYED');
+      return;
+    }
+
+    if (Object.keys(participantResults).length >= MAX_BOOTHS_PER_PARTICIPANT) {
+      setStage('PASSPORT');
+      return;
+    }
+
+    setTargetBooth(booth);
+    setRulesModalBooth({ booth, topic, participantEmail });
+  }, [participant?.email]);
+
+  const handlePlayFromRules = useCallback(() => {
+    if (!rulesModalBooth) return;
+    const { booth, topic, participantEmail } = rulesModalBooth;
+    setRulesModalBooth(null);
+    startBoothQuiz(booth, topic, participantEmail);
+  }, [rulesModalBooth, startBoothQuiz]);
+
+  const handleCloseRulesModal = useCallback(() => {
+    setRulesModalBooth(null);
+    if (participant && stage === 'WELCOME') {
+      setStage('PASSPORT');
+    }
+  }, [participant, stage]);
+
   const handleTopicSelect = useCallback((topic: BoothTopic) => {
     if (!targetBooth) return;
-    startBoothQuiz(targetBooth, topic);
-  }, [targetBooth, startBoothQuiz]);
+    requestStartBooth(targetBooth, topic);
+  }, [targetBooth, requestStartBooth]);
 
   const handleStartFromWelcome = useCallback(() => {
     if (!participant) {
@@ -359,9 +403,9 @@ export default function App() {
         return;
       }
 
-      // If there's a target booth (from QR scan) and it's not played yet, go straight to quiz!
+      // If there's a target booth (from QR scan) and it's not played yet, show rules popup!
       if (targetBooth && !identityChanged) {
-        startBoothQuiz(targetBooth, undefined, p.email);
+        requestStartBooth(targetBooth, undefined, p.email);
         return;
       }
 
@@ -536,27 +580,8 @@ export default function App() {
   }, [stage, prevStage]);
 
   const handleLaunchBoothFromPassport = useCallback((booth: BoothConfig) => {
-    setTargetBooth(booth);
-    if (!participant) {
-      setStage('PARTICIPANT');
-      return;
-    }
-
-    const participantResults = getBoothResults(participant.email);
-    if (participantResults[booth.id]) {
-      setCurrentBoothResult(participantResults[booth.id]);
-      setStage('ALREADY_PLAYED');
-      return;
-    }
-
-    if (Object.keys(participantResults).length >= MAX_BOOTHS_PER_PARTICIPANT) {
-      setStage('PASSPORT');
-      return;
-    }
-
-    // Immediately start the booth quiz!
-    startBoothQuiz(booth, undefined, participant.email);
-  }, [participant, startBoothQuiz]);
+    requestStartBooth(booth);
+  }, [requestStartBooth]);
 
   const handleOpenScannedUrl = useCallback((url: string) => {
     window.location.href = url;
@@ -704,6 +729,13 @@ export default function App() {
             />
           )}
         </Suspense>
+
+        <GameRulesModal
+          isOpen={Boolean(rulesModalBooth)}
+          booth={rulesModalBooth?.booth ?? null}
+          onClose={handleCloseRulesModal}
+          onPlay={handlePlayFromRules}
+        />
         </Layout>
     </>
   );

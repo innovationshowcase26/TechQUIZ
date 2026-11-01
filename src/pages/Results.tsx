@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import type { QuizResult } from '../types';
 import { REQUIRED_BOOTHS_TO_WIN, TOTAL_BOOTHS } from '../data/boothsConfig';
 import { AppStickyHeader } from '../components/AppStickyHeader';
+import { BoothCompletionModal } from '../components/BoothCompletionModal';
 
 interface ResultsProps {
   result: QuizResult;
@@ -18,6 +20,7 @@ export function Results({
   completedCount,
   onDone,
 }: ResultsProps) {
+  const [showCompletionModal, setShowCompletionModal] = useState(true);
   const isWinner = completedCount >= REQUIRED_BOOTHS_TO_WIN;
   const remaining = Math.max(0, REQUIRED_BOOTHS_TO_WIN - completedCount);
 
@@ -162,6 +165,13 @@ export function Results({
           View Passport →
         </button>
       </footer>
+
+      <BoothCompletionModal
+        isOpen={showCompletionModal}
+        completedCount={completedCount}
+        onClose={() => setShowCompletionModal(false)}
+        onViewPassport={onDone}
+      />
     </div>
   );
 }

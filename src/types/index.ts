@@ -1,6 +1,7 @@
 export interface Participant {
   name: string;
   email: string;
+  phone?: string;
   role?: string;
   entId?: string; // Legacy fallback
   lob?: string;   // Legacy fallback

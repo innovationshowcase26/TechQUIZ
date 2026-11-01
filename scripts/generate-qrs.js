@@ -22,15 +22,15 @@ if (!fs.existsSync(ROOT_QR_DIR)) {
 }
 
 const BOOTHS = [
-  { number: 1, title: 'Data Governance, Lineage & Zero Trust' },
-  { number: 2, title: 'Autonomous Agents, Digital Identity & Next-Gen Banking' },
-  { number: 3, title: 'AI-Powered Software Engineering & Developer Productivity' },
-  { number: 4, title: 'Cloud Modernization & Data Platforms' },
-  { number: 5, title: 'Enterprise AI Platform & Intelligent AI Operations' },
-  { number: 6, title: 'AI Business Intelligence & Process Automation' },
-  { number: 7, title: 'Agentic Banking, Risk Intelligence & AI Teammates' },
-  { number: 8, title: 'Intelligent Enterprise Platforms & SRE Operations' },
-  { number: 9, title: 'AI-Accelerated Engineering, Automation & Quality' },
+  { number: 1, title: 'Data / Security' },
+  { number: 2, title: 'Future-Ready Technologies' },
+  { number: 3, title: 'Engineering Efficiency & Enhancing Productivity' },
+  { number: 4, title: 'Modernization And Transformation' },
+  { number: 5, title: 'AI Enablements' },
+  { number: 6, title: 'Business Enablers - Booth 1' },
+  { number: 7, title: 'Business Enablers - Booth 2' },
+  { number: 8, title: 'Technology Enablers - Booth 1' },
+  { number: 9, title: 'Technology Enablers - Booth 2' },
 ];
 
 async function generateAll() {

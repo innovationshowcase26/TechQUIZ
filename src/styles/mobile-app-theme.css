@@ -1716,4 +1716,259 @@ html, body, #root {
   animation: app-pulse 1.2s ease-in-out infinite;
 }
 
+/* ==========================================================================
+   MODAL POPUPS: GAME RULES & BOOTH COMPLETION (FULLY PHONE OPTIMIZED)
+   ========================================================================== */
+.app-rules-modal-overlay,
+.app-completion-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background-color: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-sizing: border-box;
+}
+
+.app-rules-modal-card,
+.app-completion-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 530px;
+  max-height: calc(100dvh - 24px);
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background-color: #FFFFFF;
+  border-radius: 22px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(226, 232, 240, 0.85);
+  box-sizing: border-box;
+  padding: 24px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Close Button */
+.app-modal-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  padding: 0;
+  color: #1E293B;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.app-modal-close-btn:hover {
+  transform: scale(1.08);
+  background-color: #F8FAFC;
+}
+
+/* Formula Row */
+.app-rules-formula-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.app-rules-formula-card {
+  flex: 1;
+  border-radius: 14px;
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-height: 118px;
+  box-sizing: border-box;
+  justify-content: space-between;
+}
+
+/* 2-Column Completion Progress Card */
+.app-completion-progress-card {
+  width: 100%;
+  background-color: #EFF6FF;
+  border: 1px solid rgba(191, 219, 254, 0.75);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-sizing: border-box;
+  margin-bottom: 18px;
+}
+
+/* Mobile Media Queries: Phones <= 480px */
+@media (max-width: 480px) {
+  .app-rules-modal-overlay,
+  .app-completion-modal-overlay {
+    padding: 8px;
+  }
+
+  .app-rules-modal-card,
+  .app-completion-modal-card {
+    padding: 16px 12px 14px;
+    border-radius: 18px;
+    max-height: calc(100dvh - 16px);
+    max-height: calc(100vh - 16px);
+  }
+
+  .app-modal-close-btn {
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .app-rules-title,
+  .app-completion-title {
+    font-size: 21px !important;
+  }
+
+  .app-rules-subtitle {
+    font-size: 11.5px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .app-rules-formula-row {
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .app-rules-formula-card {
+    padding: 8px 4px 6px;
+    min-height: 102px;
+    border-radius: 10px;
+  }
+
+  .app-rules-formula-icon {
+    width: 26px !important;
+    height: 26px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .app-rules-formula-icon svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  .app-rules-formula-val {
+    font-size: 14px !important;
+  }
+
+  .app-rules-formula-desc {
+    font-size: 9.5px !important;
+    line-height: 1.15 !important;
+  }
+
+  .app-rules-badge-pill {
+    font-size: 8px !important;
+    padding: 2px 4px !important;
+    margin-top: 3px !important;
+    white-space: normal !important;
+  }
+
+  .app-rules-operator {
+    font-size: 16px !important;
+  }
+
+  .app-rules-points-banner {
+    padding: 7px 10px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .app-rules-points-title {
+    font-size: 12.5px !important;
+  }
+
+  .app-rules-points-sub {
+    font-size: 10px !important;
+  }
+
+  .app-rules-pillars-row {
+    margin-bottom: 12px !important;
+  }
+
+  .app-rules-pillar-title {
+    font-size: 11px !important;
+  }
+
+  .app-rules-pillar-sub {
+    font-size: 9.5px !important;
+  }
+
+  /* Completion Modal Mobile */
+  .app-completion-trophy {
+    height: 60px !important;
+    width: 85px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .app-completion-subhead {
+    font-size: 13.5px !important;
+  }
+
+  .app-completion-subtext {
+    font-size: 11px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .app-completion-progress-card {
+    padding: 10px 8px;
+    margin-bottom: 14px;
+    gap: 4px;
+  }
+
+  .app-completion-circle-icon {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .app-completion-circle-icon svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .app-completion-gift-icon svg {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .app-completion-stat-val {
+    font-size: 18px !important;
+  }
+
+  .app-completion-stat-lbl {
+    font-size: 10px !important;
+  }
+
+  .app-modal-primary-btn {
+    padding: 10px 30px !important;
+    font-size: 14.5px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .app-completion-tagline {
+    font-size: 10.5px !important;
+  }
+}
+
 

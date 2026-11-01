@@ -759,15 +759,15 @@ export const BOOTH_QUESTION_GENERATORS: Record<string, (count?: number) => QuizQ
 };
 
 export const BOOTH_GAMES_CONFIG: Record<string, { category: string; title: string; gameTypes: GameType[] }> = {
-  'booth-1': { category: 'Data & Security', title: 'Zero Trust & Lineage', gameTypes: ['memory_missing', 'grid_tap', 'odd_one', 'luck_pick', 'timer_stop'] },
-  'booth-2': { category: 'Frontier Technologies', title: 'Autonomous Agents & Identity', gameTypes: ['pair_match', 'sequence', 'pattern_quiz', 'sort_bucket', 'crowd_judge'] },
-  'booth-3': { category: 'Software Engineering', title: 'AI Developer Productivity', gameTypes: ['grid_tap', 'memory_missing', 'timer_stop', 'pattern_quiz', 'luck_pick'] },
-  'booth-4': { category: 'Cloud & Architecture', title: 'Cloud Modernization', gameTypes: ['odd_one', 'sort_bucket', 'pair_match', 'sequence', 'crowd_judge'] },
-  'booth-5': { category: 'Enterprise AI Platform', title: 'Enterprise AI Operations', gameTypes: ['memory_missing', 'pattern_quiz', 'grid_tap', 'timer_stop', 'luck_pick'] },
-  'booth-6': { category: 'Business Solutions', title: 'AI Business Automation', gameTypes: ['sort_bucket', 'odd_one', 'pair_match', 'crowd_judge', 'sequence'] },
-  'booth-7': { category: 'Risk & Banking', title: 'Agentic Banking & Risk', gameTypes: ['timer_stop', 'memory_missing', 'luck_pick', 'grid_tap', 'pattern_quiz'] },
-  'booth-8': { category: 'Enterprise Platforms', title: 'SRE & Platform Resilience', gameTypes: ['sequence', 'crowd_judge', 'pair_match', 'sort_bucket', 'odd_one'] },
-  'booth-9': { category: 'CI/CD & Quality', title: 'Engineering Automation & Quality', gameTypes: ['pattern_quiz', 'grid_tap', 'memory_missing', 'luck_pick', 'timer_stop'] },
+  'booth-1': { category: 'Data & Security', title: 'Data / Security', gameTypes: ['memory_missing', 'grid_tap', 'odd_one', 'luck_pick', 'timer_stop'] },
+  'booth-2': { category: 'Future-Ready Technologies', title: 'Future-Ready Technologies', gameTypes: ['pair_match', 'sequence', 'pattern_quiz', 'sort_bucket', 'crowd_judge'] },
+  'booth-3': { category: 'Engineering Efficiency', title: 'Engineering Efficiency & Enhancing Productivity', gameTypes: ['grid_tap', 'memory_missing', 'timer_stop', 'pattern_quiz', 'luck_pick'] },
+  'booth-4': { category: 'Modernization & Transformation', title: 'Modernization And Transformation', gameTypes: ['odd_one', 'sort_bucket', 'pair_match', 'sequence', 'crowd_judge'] },
+  'booth-5': { category: 'AI Enablements', title: 'AI Enablements', gameTypes: ['memory_missing', 'pattern_quiz', 'grid_tap', 'timer_stop', 'luck_pick'] },
+  'booth-6': { category: 'Business Enablers', title: 'Business Enablers - Booth 1', gameTypes: ['sort_bucket', 'odd_one', 'pair_match', 'crowd_judge', 'sequence'] },
+  'booth-7': { category: 'Business Enablers', title: 'Business Enablers - Booth 2', gameTypes: ['timer_stop', 'memory_missing', 'luck_pick', 'grid_tap', 'pattern_quiz'] },
+  'booth-8': { category: 'Technology Enablers', title: 'Technology Enablers - Booth 1', gameTypes: ['sequence', 'crowd_judge', 'pair_match', 'sort_bucket', 'odd_one'] },
+  'booth-9': { category: 'Technology Enablers', title: 'Technology Enablers - Booth 2', gameTypes: ['pattern_quiz', 'grid_tap', 'memory_missing', 'luck_pick', 'timer_stop'] },
 };
 
 export function generateMiniGamesForBooth(boothKey: string, count: number = 15): QuizQuestion[] {
