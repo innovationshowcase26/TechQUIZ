@@ -12,6 +12,25 @@ function pad(n: number): string {
   return n.toString().padStart(2, '0');
 }
 
+/**
+ * Returns user submission time in 24-hour format "HH:mm" in India Standard Time (IST)
+ * based on user's system time (e.g. "22:47").
+ */
+export function getIndiaCompletionTime(date: Date = new Date()): string {
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).format(date);
+  } catch {
+    const hh = pad(date.getHours());
+    const mm = pad(date.getMinutes());
+    return `${hh}:${mm}`;
+  }
+}
+
 export function generateSubmissionId(date: Date = new Date()): string {
   const y = date.getUTCFullYear();
   const m = pad(date.getUTCMonth() + 1);
@@ -42,6 +61,7 @@ export function buildSubmission(
     };
   });
 
+  const now = new Date();
   return {
     schemaVersion: '1.0',
     event: {
@@ -49,8 +69,9 @@ export function buildSubmission(
       eventName: 'Technology Summit',
     },
     submission: {
-      submissionId: generateSubmissionId(),
-      completedAt: new Date().toISOString(),
+      submissionId: generateSubmissionId(now),
+      completedAt: now.toISOString(),
+      completionTime: getIndiaCompletionTime(now),
     },
     booth: quizState.boothId ? {
       boothId: quizState.boothId,

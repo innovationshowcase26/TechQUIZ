@@ -12,6 +12,7 @@ import type { Participant, BoothResult, Submission } from '../types';
 import { collectDeviceMetadata } from '../utils/deviceFingerprint';
 import { getBoothResults } from '../utils/storage';
 import { REQUIRED_BOOTHS_TO_WIN } from '../data/boothsConfig';
+import { getIndiaCompletionTime } from '../utils/submission';
 
 // Web app's Firebase configuration
 const firebaseConfig = {
@@ -58,9 +59,10 @@ export async function saveBoothResultInFirestore(
   const boothNumber = submission.booth?.boothNumber || 1;
   const boothId = submission.booth?.boothId || `booth-${boothNumber}`;
   const now = submission.submission?.completedAt || new Date().toISOString();
+  const completionTime = submission.submission?.completionTime || getIndiaCompletionTime();
 
   try {
-    // 1. Lightweight booth document: only booth test scores and answers
+    // 1. Lightweight booth document: only booth test scores, completion time, and answers
     const boothDocRef = doc(db, 'participants', docKey, 'booths', `booth-${boothNumber}`);
     const boothData = {
       boothNumber,
@@ -68,6 +70,7 @@ export async function saveBoothResultInFirestore(
       boothTitle: submission.booth?.boothTitle || `Booth ${boothNumber}`,
       topicTitle: submission.booth?.topicTitle || '',
       completedAt: now,
+      completionTime,
       score: submission.quiz.score,
       totalQuestions: submission.quiz.totalQuestions,
       percentage: submission.quiz.percentage,
@@ -113,6 +116,7 @@ export async function saveBoothResultInFirestore(
         email: docKey,
         role: participant.role || 'Summit Attendee',
         lastActiveAt: now,
+        completionTime,
         device: collectDeviceMetadata(),
         summary: {
           boothsCompleted,
@@ -122,6 +126,7 @@ export async function saveBoothResultInFirestore(
           totalTimeSeconds: totalTime,
           isTargetReached,
           isPrizeEligible: isTargetReached,
+          completionTime,
         },
       },
       { merge: true },
@@ -234,6 +239,7 @@ export async function fetchParticipantFromFirestore(identifier: string): Promise
             unansweredAnswers: b.unansweredAnswers ?? 0,
             timeTakenSeconds,
             completedAt: b.completedAt || b.submission?.completedAt || b.savedAt || new Date().toISOString(),
+            completionTime: b.completionTime || (b.completedAt ? getIndiaCompletionTime(new Date(b.completedAt)) : getIndiaCompletionTime()),
             answers: b.answers || [],
           };
         });

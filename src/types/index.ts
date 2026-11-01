@@ -125,6 +125,7 @@ export interface BoothResult extends QuizResult {
   topicId?: string;
   topicTitle?: string;
   completedAt: string;
+  completionTime?: string;
   answers: QuizAnswer[];
 }
 
@@ -137,6 +138,7 @@ export interface Submission {
   submission: {
     submissionId: string;
     completedAt: string;
+    completionTime?: string;
   };
   booth?: {
     boothId: string;

@@ -30,6 +30,7 @@ import {
 } from './utils/storage';
 import { getBoothById, MAX_BOOTHS_PER_PARTICIPANT, REQUIRED_BOOTHS_TO_WIN } from './data/boothsConfig';
 import { loadBoothQuestions } from './utils/questionEngine';
+import { getIndiaCompletionTime } from './utils/submission';
 
 const QUESTION_COUNT = 5;
 
@@ -532,6 +533,7 @@ export default function App() {
         topicId: persisted.topicId,
         topicTitle: persisted.topicTitle,
         completedAt: new Date().toISOString(),
+        completionTime: getIndiaCompletionTime(),
         answers: answersList,
       };
 
